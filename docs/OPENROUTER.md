@@ -10,3 +10,11 @@ docker compose exec backend uv run python -m app.openrouter_smoke
 ```
 
 The smoke test sends `What is 2+2?` through OpenRouter's free model router and exits successfully when the answer is `4`. It reports configuration and provider errors without displaying the API key. The regular backend tests use mocked HTTP responses and do not require a key or network access.
+
+To make an opt-in live call through the board-aware chat API and verify that a no-change request leaves its temporary seeded board untouched, run:
+
+```bash
+docker compose exec backend uv run python -m app.chat_smoke
+```
+
+The command runs inside the configured backend container and uses a temporary SQLite database. It prints only pass/fail status, not the assistant response or API key.

@@ -107,16 +107,20 @@ Tests and success criteria:
 - With a valid key and provider access, the smoke test completes and returns an answer equivalent to `4`.
 - Missing keys and provider failures produce actionable errors without revealing credentials.
 
-Part 9: Board-aware AI API - NOT STARTED
+Part 9: Board-aware AI API - COMPLETE
 
 Extend the backend AI request to include the persisted board, the user's question, and conversation history. Require a structured response containing user-facing text and an optional validated board update.
 
-- [ ] Define request and response schemas for a user question, bounded conversation history, response text, and optional board update.
-- [ ] Add a chat API route scoped to the demo user's board; load the current board from SQLite for every request and include it with the question and history in the model input.
-- [ ] Require structured model output and validate any returned board update with the existing board schema before saving it transactionally.
-- [ ] Return the assistant response and the resulting board only when an update was accepted and saved.
-- [ ] Add unit and API tests for responses without changes, valid updates, malformed structured output, invalid board updates, and provider failures.
-- [ ] Add a live smoke check using a configured API key while keeping automated tests deterministic and network independent.
+- [x] Define request and response schemas for a user question, bounded conversation history, response text, and optional board update.
+- [x] Add a chat API route scoped to the demo user's board; load the current board from SQLite for every request and include it with the question and history in the model input.
+- [x] Require structured model output and validate any returned board update with the existing board schema before saving it transactionally.
+- [x] Return the assistant response and the resulting board only when an update was accepted and saved.
+- [x] Add unit and API tests for responses without changes, valid updates, malformed structured output, invalid board updates, and provider failures.
+- [x] Add a live smoke check using a configured API key while keeping automated tests deterministic and network independent.
+
+Verification:
+- Passed: backend test suite (33 tests), including mocked chat API responses, schema validation, persistence, and provider failure paths.
+- Passed: Docker Compose image rebuild and live board-aware chat smoke test using the configured key; the test ran against a temporary SQLite database and left the persistent board untouched.
 
 Tests and success criteria:
 - The model receives the current persisted board, the user's question, and the supplied conversation history.

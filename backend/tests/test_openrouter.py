@@ -40,6 +40,30 @@ def test_complete_returns_model_text_and_uses_free_model():
     assert asyncio.run(client.complete("2+2?")) == "4"
 
 
+def test_complete_messages_requests_strict_structured_output():
+    messages = [{"role": "user", "content": "Return a structured response."}]
+    response_format = {
+        "type": "json_schema",
+        "json_schema": {"name": "reply", "strict": True, "schema": {}},
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        assert body["messages"] == messages
+        assert body["response_format"] == response_format
+        assert body["provider"] == {"require_parameters": True}
+        return httpx.Response(
+            200, json={"choices": [{"message": {"content": '{"ok":true}'}}]}
+        )
+
+    client = OpenRouterClient(
+        api_key="test-secret", transport=MockAsyncTransport(handler)
+    )
+    assert asyncio.run(
+        client.complete_messages(messages, response_format=response_format)
+    ) == '{"ok":true}'
+
+
 def test_complete_reports_missing_key(monkeypatch):
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     with pytest.raises(OpenRouterConfigurationError, match="OPENROUTER_API_KEY"):

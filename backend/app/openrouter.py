@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import httpx
 
@@ -32,10 +33,22 @@ class OpenRouterClient:
         self.transport = transport
 
     async def complete(self, prompt: str) -> str:
+        return await self.complete_messages([{"role": "user", "content": prompt}])
+
+    async def complete_messages(
+        self,
+        messages: list[dict[str, str]],
+        response_format: dict[str, Any] | None = None,
+    ) -> str:
         if not self.api_key:
             raise OpenRouterConfigurationError(
                 "OPENROUTER_API_KEY is not configured. Set it in the backend environment."
             )
+
+        request_body: dict[str, Any] = {"model": self.model, "messages": messages}
+        if response_format is not None:
+            request_body["response_format"] = response_format
+            request_body["provider"] = {"require_parameters": True}
 
         try:
             async with httpx.AsyncClient(
@@ -44,10 +57,7 @@ class OpenRouterClient:
                 response = await client.post(
                     OPENROUTER_API_URL,
                     headers={"Authorization": f"Bearer {self.api_key}"},
-                    json={
-                        "model": self.model,
-                        "messages": [{"role": "user", "content": prompt}],
-                    },
+                    json=request_body,
                 )
                 response.raise_for_status()
                 payload = response.json()

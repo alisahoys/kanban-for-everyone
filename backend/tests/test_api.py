@@ -35,12 +35,12 @@ def test_hello_endpoint_returns_message(client: TestClient) -> None:
     assert response.json() == {"message": "hello from the PM backend"}
 
 
-def test_next_development_origin_can_call_board_api(client: TestClient) -> None:
+def test_next_development_origin_can_call_chat_api(client: TestClient) -> None:
     response = client.options(
-        "/api/users/demo-user/board",
+        "/api/users/demo-user/chat",
         headers={
             "Origin": "http://localhost:3000",
-            "Access-Control-Request-Method": "PUT",
+            "Access-Control-Request-Method": "POST",
             "Access-Control-Request-Headers": "content-type",
         },
     )

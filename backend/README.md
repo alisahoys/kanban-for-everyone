@@ -1,6 +1,7 @@
 # PM Backend
 
 This backend provides the FastAPI API for the project management MVP.
+Board-aware chat is available at `POST /api/users/{user_id}/chat`.
 
 ## Run locally
 
@@ -18,4 +19,4 @@ uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 - Open http://localhost:8000/ to view the statically exported Kanban board
 - Call http://localhost:8000/api/health
-- Run the optional live OpenRouter check as described in [docs/OPENROUTER.md](../docs/OPENROUTER.md)
+- Run the optional live AI checks as described in [docs/OPENROUTER.md](../docs/OPENROUTER.md)
