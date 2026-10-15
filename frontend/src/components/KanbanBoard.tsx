@@ -14,6 +14,7 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
+import { ChatSidebar } from "@/components/ChatSidebar";
 import { createId, moveCard, type BoardData } from "@/lib/kanban";
 import { useBoardSync } from "@/hooks/useBoardSync";
 
@@ -263,44 +264,52 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
           </div>
         </header>
 
-        <DndContext
-          id="kanban-board-dnd"
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-          onDragCancel={handleDragCancel}
-        >
-          <section className="grid gap-6 lg:grid-cols-5">
-            {board.columns.map((column) => (
-              <KanbanColumn
-                key={column.id}
-                column={column}
-                cards={column.cardIds.map((cardId) => board.cards[cardId])}
-                onRename={handleRenameColumn}
-                onAddCard={handleAddCard}
-                onEditCard={handleEditCard}
-                onDeleteCard={handleDeleteCard}
-              />
-            ))}
-          </section>
-          <DragOverlay
-            dropAnimation={{
-              duration: 300,
-              easing: "cubic-bezier(0.2, 0, 0, 1)",
-            }}
-          >
-            {activeCard ? (
-              <div
-                data-testid={`drag-overlay-${activeCard.id}`}
-                className="w-[260px]"
+        <div className="grid items-start gap-6 min-[1400px]:grid-cols-[minmax(0,1fr)_360px]">
+          <ChatSidebar
+            beforeSend={sync.saveNow}
+            onBoardUpdate={(nextBoard) => sync.updateBoard(() => nextBoard)}
+          />
+          <section className="min-w-0 overflow-x-auto pb-2 min-[1400px]:col-start-1 min-[1400px]:row-start-1">
+            <DndContext
+              id="kanban-board-dnd"
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
+            >
+              <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 min-[1400px]:min-w-[960px]">
+                {board.columns.map((column) => (
+                  <KanbanColumn
+                    key={column.id}
+                    column={column}
+                    cards={column.cardIds.map((cardId) => board.cards[cardId])}
+                    onRename={handleRenameColumn}
+                    onAddCard={handleAddCard}
+                    onEditCard={handleEditCard}
+                    onDeleteCard={handleDeleteCard}
+                  />
+                ))}
+              </section>
+              <DragOverlay
+                dropAnimation={{
+                  duration: 300,
+                  easing: "cubic-bezier(0.2, 0, 0, 1)",
+                }}
               >
-                <KanbanCardPreview card={activeCard} />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+                {activeCard ? (
+                  <div
+                    data-testid={`drag-overlay-${activeCard.id}`}
+                    className="w-[260px]"
+                  >
+                    <KanbanCardPreview card={activeCard} />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </section>
+        </div>
       </main>
     </div>
   );

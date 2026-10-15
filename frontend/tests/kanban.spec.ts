@@ -16,6 +16,13 @@ async function signIn(page: Page) {
   await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
 }
 
+async function openAssistant(page: Page) {
+  const openChat = page.getByRole("button", { name: /open chat/i });
+  if (await openChat.isVisible()) {
+    await openChat.click();
+  }
+}
+
 async function expectBoardStored(
   page: Page,
   matches: (board: typeof initialData) => boolean
@@ -76,6 +83,92 @@ test("loads the kanban board", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
   await expect(page.locator('[data-testid^="column-"]')).toHaveCount(5);
   expect(hydrationErrors).toEqual([]);
+});
+
+test("shows an AI reply without changing the board", async ({ page }) => {
+  let chatRequest: { question: string; history: unknown[] } | undefined;
+  await page.route("**/api/users/demo-user/chat", async (route) => {
+    chatRequest = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ message: "There are five columns." }),
+    });
+  });
+
+  await signIn(page);
+  await openAssistant(page);
+  await page.getByLabel("Ask the assistant").fill("How many columns are there?");
+  await page.getByRole("button", { name: "Send" }).click();
+
+  await expect(page.getByText("There are five columns.")).toBeVisible();
+  expect(chatRequest).toEqual({
+    question: "How many columns are there?",
+    history: [],
+  });
+  await expectBoardStored(page, (board) =>
+    board.columns[0]?.title === initialData.columns[0]?.title &&
+      board.cards["card-1"]?.title === initialData.cards["card-1"]?.title &&
+      Object.keys(board.cards).length === Object.keys(initialData.cards).length
+  );
+});
+
+test("applies and persists a board update returned by AI chat", async ({ page }) => {
+  const updatedBoard = structuredClone(initialData);
+  updatedBoard.cards["card-1"].title = "Updated by the assistant";
+  await page.route("**/api/users/demo-user/chat", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        message: "I renamed the task.",
+        board: updatedBoard,
+      }),
+    });
+  });
+
+  await signIn(page);
+  await openAssistant(page);
+  await page.getByLabel("Ask the assistant").fill("Rename the first task.");
+  await page.getByRole("button", { name: "Send" }).click();
+
+  await expect(page.getByText("I renamed the task.")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Updated by the assistant" })
+  ).toBeVisible();
+  await expectBoardStored(page, (board) =>
+    board.cards["card-1"]?.title === "Updated by the assistant"
+  );
+});
+
+test("keeps the narrow chat panel in page flow so the board stays usable", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await signIn(page);
+  await openAssistant(page);
+  await expect(page.getByRole("complementary", { name: "AI assistant" })).toBeVisible();
+
+  const backlog = page.getByTestId("column-col-backlog");
+  await backlog.getByRole("button", { name: /add a card/i }).click();
+  await backlog.getByPlaceholder("Card title").fill("Board stays usable");
+  await backlog.getByRole("button", { name: /add card/i }).click();
+  await expect(backlog.getByText("Board stays usable")).toBeVisible();
+});
+
+test("shows chat beside the board on a wide desktop viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await signIn(page);
+
+  const sidebar = page.getByRole("complementary", { name: "AI assistant" });
+  await expect(sidebar).toBeVisible();
+  await expect(page.getByLabel("Ask the assistant")).toBeVisible();
+  await expect(page.getByRole("button", { name: /open chat/i })).toBeHidden();
+
+  const reviewBox = await page.getByTestId("column-col-review").boundingBox();
+  const sidebarBox = await sidebar.boundingBox();
+  if (!reviewBox || !sidebarBox) {
+    throw new Error("Unable to resolve the desktop board and sidebar positions.");
+  }
+  expect(reviewBox.x + reviewBox.width).toBeLessThan(sidebarBox.x);
 });
 
 test("adds a card to a column", async ({ page }) => {

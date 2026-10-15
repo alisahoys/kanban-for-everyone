@@ -9,6 +9,7 @@ This directory contains the Next.js-based frontend for the project management MV
 - The main entry point is `src/app/page.tsx`, which renders `SignInGate`; the board appears after entering the demo credentials (`user` / `password`)
 - Board logic and state helpers live under `src/lib/kanban.ts`
 - UI building blocks such as cards, columns, and forms live under `src/components/`
+- The board-aware AI chat sidebar lives in `src/components/ChatSidebar.tsx`; its API client is `src/lib/chatApi.ts`
 - The project already includes unit tests and Playwright smoke tests
 - The demo sign-in is client-side only and stores its state in `sessionStorage`; it is not backend authentication
 - The board loads from `GET /api/users/demo-user/board` and changes are saved with full-board `PUT` requests

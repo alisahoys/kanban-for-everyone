@@ -127,16 +127,21 @@ Tests and success criteria:
 - Valid optional updates are persisted and returned; absent or invalid updates never alter the board.
 - Automated tests cover the API contract and failure paths without calling OpenRouter.
 
-Part 10: AI chat sidebar - NOT STARTED
+Part 10: AI chat sidebar - COMPLETE
 
 Add a sidebar chat interface that uses the board-aware API and applies accepted board updates to the visible board.
 
-- [ ] Add a responsive sidebar with conversation history, a question input, send action, loading state, and readable error handling.
-- [ ] Send the question and relevant conversation history to the backend chat API; keep OpenRouter credentials server-side.
-- [ ] Show the assistant response and apply a returned board update to the existing board state so the board refreshes immediately.
-- [ ] Add focused unit tests for chat submission, response rendering, loading/errors, and applying an updated board.
-- [ ] Extend Playwright coverage for a normal AI reply and an AI response that changes the board; use a deterministic mocked API for browser tests.
-- [ ] Verify the built Docker app with a live OpenRouter call when credentials and provider access are available.
+- [x] Add a responsive sidebar with conversation history, a question input, send action, loading state, and readable error handling.
+- [x] Send the question and relevant conversation history to the backend chat API; keep OpenRouter credentials server-side.
+- [x] Show the assistant response and apply a returned board update to the existing board state so the board refreshes immediately.
+- [x] Add focused unit tests for chat submission, response rendering, loading/errors, and applying an updated board.
+- [x] Extend Playwright coverage for a normal AI reply and an AI response that changes the board; use a deterministic mocked API for browser tests.
+- [x] Verify the built Docker app with a live OpenRouter call when credentials and provider access are available.
+
+Verification:
+- Passed: frontend unit suite (23 tests, 82.32% statement coverage), lint, and production build.
+- Passed: 11 Playwright tests against the FastAPI-served static export, including mocked chat replies, immediate board updates with backend persistence, narrow-screen board interaction, wide-screen sidebar layout, and drag-and-drop.
+- Passed: Docker Compose image rebuild and live board-aware OpenRouter smoke check using a temporary SQLite database; the persistent board remained unchanged.
 
 Tests and success criteria:
 - Chat works at desktop and narrow viewport sizes without blocking board interactions outside the sidebar.
