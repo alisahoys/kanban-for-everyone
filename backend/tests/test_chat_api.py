@@ -89,6 +89,43 @@ def test_chat_valid_board_update_is_saved_and_returned(tmp_path):
         client.__exit__(None, None, None)
 
 
+def test_chat_preserves_project_when_model_update_omits_it(tmp_path):
+    client, openrouter = make_client(tmp_path, "")
+    try:
+        board = client.get("/api/users/demo-user/board").json()
+        board["project"] = {
+            "name": "Customer insights",
+            "description": "Turn customer feedback into product improvements.",
+        }
+        client.put("/api/users/demo-user/board", json=board)
+        updated_board = deepcopy(board)
+        updated_board["columns"][0]["cardIds"].remove("card-1")
+        updated_board["columns"][4]["cardIds"].append("card-1")
+        del updated_board["project"]
+        openrouter.reply = json.dumps(
+            {
+                "message": "I moved Align roadmap themes to Done.",
+                "board_update": updated_board,
+            }
+        )
+
+        response = client.post(
+            "/api/users/demo-user/chat",
+            json={"question": "Move the Align roadmap themes card to Done."},
+        )
+
+        expected_board = deepcopy(updated_board)
+        expected_board["project"] = board["project"]
+        assert response.status_code == 200
+        assert response.json() == {
+            "message": "I moved Align roadmap themes to Done.",
+            "board": expected_board,
+        }
+        assert client.get("/api/users/demo-user/board").json() == expected_board
+    finally:
+        client.__exit__(None, None, None)
+
+
 def test_chat_rejects_malformed_output_without_changing_board(tmp_path):
     client, _ = make_client(tmp_path, "not json")
     try:

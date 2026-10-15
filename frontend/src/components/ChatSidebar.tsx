@@ -87,7 +87,7 @@ export const ChatSidebar = ({
         <div
           aria-label="Conversation"
           aria-live="polite"
-          className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4"
+          className="chat-floral-surface min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4"
           role="log"
         >
           {turns.length === 0 && !pendingQuestion ? (

@@ -155,11 +155,12 @@ Add editable project name and description fields so the board has reliable conte
 - [x] Extend the board data model and SQLite persistence with a project name and description; preserve existing local databases and seed sensible values for new databases.
 - [x] Extend the board API and frontend to load, edit, validate, and save the project details.
 - [x] Include the saved project details in the AI context and use them when answering project description and summary questions.
+- [x] Preserve saved project details when an AI card update omits the project field.
 - [x] Cover database initialization and existing-database migration, API validation and persistence, frontend editing, and AI context with automated tests.
 - [x] Verify project details survive reload and backend container recreation.
 
 Verification:
-- Passed: backend test suite (35 tests, including existing-database migration, project API validation and persistence, and project details in the AI context).
+- Passed: backend test suite (36 tests, including existing-database migration, project API validation and persistence, project details in the AI context, and project preservation in AI card updates).
 - Passed: frontend unit suite (26 tests, 83.12% statement coverage), lint, production build, and 12 Playwright tests; the browser tests cover editing and reloading saved project details.
 - Passed: Docker Compose rebuild and backend container recreation; project metadata and all 8 existing cards persisted. The temporary persistence-check metadata was restored to the original board values.
 

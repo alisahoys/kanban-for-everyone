@@ -46,6 +46,12 @@ body {
   background-size: 32px 32px;
 }
 
+.chat-floral-surface {
+  background-color: #FDF8F7;
+  background-image: url("/chat-floral-pattern.svg");
+  background-size: 280px 280px;
+}
+
 .kanban-drag-active,
 .kanban-drag-active * {
   cursor: default !important;

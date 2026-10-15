@@ -103,6 +103,13 @@ def create_app(
                 detail="AI provider returned malformed structured output",
             ) from error
 
+        if isinstance(decoded_reply, dict):
+            board_update = decoded_reply.get("board_update")
+            if isinstance(board_update, dict):
+                board_update.setdefault(
+                    "project", current_board.project.model_dump(mode="json")
+                )
+
         try:
             model_reply = StructuredChatReply.model_validate(decoded_reply)
         except ValidationError as error:
