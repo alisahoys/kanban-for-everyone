@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "database": "SQLite",
+  "description": "Relational schema for one Kanban board per user.",
+  "tables": [
+    {
+      "name": "users",
+      "columns": [
+        { "name": "id", "type": "TEXT", "primaryKey": true },
+        { "name": "username", "type": "TEXT", "notNull": true, "unique": true }
+      ]
+    },
+    {
+      "name": "boards",
+      "columns": [
+        { "name": "id", "type": "TEXT", "primaryKey": true },
+        {
+          "name": "user_id",
+          "type": "TEXT",
+          "notNull": true,
+          "references": { "table": "users", "column": "id", "onDelete": "CASCADE" },
+          "unique": true
+        }
+      ],
+      "constraints": ["One board per user"]
+    },
+    {
+      "name": "columns",
+      "columns": [
+        { "name": "board_id", "type": "TEXT", "notNull": true },
+        { "name": "id", "type": "TEXT", "notNull": true },
+        { "name": "title", "type": "TEXT", "notNull": true },
+        { "name": "position", "type": "INTEGER", "notNull": true, "check": "position >= 0" }
+      ],
+      "primaryKey": ["board_id", "id"],
+      "foreignKeys": [
+        {
+          "columns": ["board_id"],
+          "references": { "table": "boards", "columns": ["id"], "onDelete": "CASCADE" }
+        }
+      ],
+      "unique": [["board_id", "position"]],
+      "constraints": ["Column order is stored by position; MVP routes do not add, delete, or reorder columns"]
+    },
+    {
+      "name": "cards",
+      "columns": [
+        { "name": "board_id", "type": "TEXT", "notNull": true },
+        { "name": "id", "type": "TEXT", "notNull": true },
+        { "name": "column_id", "type": "TEXT", "notNull": true },
+        { "name": "title", "type": "TEXT", "notNull": true },
+        { "name": "details", "type": "TEXT", "notNull": true, "default": "" },
+        { "name": "position", "type": "INTEGER", "notNull": true, "check": "position >= 0" }
+      ],
+      "primaryKey": ["board_id", "id"],
+      "foreignKeys": [
+        {
+          "columns": ["board_id", "column_id"],
+          "references": { "table": "columns", "columns": ["board_id", "id"], "onDelete": "CASCADE" }
+        }
+      ],
+      "unique": [["board_id", "column_id", "position"]]
+    }
+  ],
+  "mvpSeedUser": { "id": "demo-user", "username": "user" },
+  "boardJsonShape": {
+    "columns": [{ "id": "col-backlog", "title": "Backlog", "cardIds": ["card-1"] }],
+    "cards": {
+      "card-1": { "id": "card-1", "title": "Example task", "details": "Task details" }
+    }
+  }
+}

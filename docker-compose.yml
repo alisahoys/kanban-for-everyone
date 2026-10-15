@@ -8,3 +8,10 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    environment:
+      PM_DATABASE_PATH: /data/kanban.sqlite3
+    volumes:
+      - pm-data:/data
+
+volumes:
+  pm-data:

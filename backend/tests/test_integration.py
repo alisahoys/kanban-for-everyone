@@ -1,5 +1,6 @@
 """Integration checks against a real Uvicorn process and HTTP listener."""
 
+import os
 import re
 import socket
 import subprocess
@@ -20,8 +21,10 @@ def _available_port() -> int:
 
 
 @pytest.fixture
-def running_server():
+def running_server(tmp_path):
     port = _available_port()
+    database_path = tmp_path / "integration.sqlite3"
+    environment = dict(os.environ, PM_DATABASE_PATH=str(database_path))
     process = subprocess.Popen(
         [
             sys.executable,
@@ -36,6 +39,7 @@ def running_server():
             "warning",
         ],
         cwd=BACKEND_DIR,
+        env=environment,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
@@ -63,6 +67,7 @@ def running_server():
         except subprocess.TimeoutExpired:
             process.kill()
             process.wait(timeout=5)
+        database_path.unlink(missing_ok=True)
 
 
 def test_server_serves_html_and_api_over_http(running_server: str) -> None:
@@ -76,7 +81,7 @@ def test_server_serves_html_and_api_over_http(running_server: str) -> None:
 
     assert page.status_code == 200
     assert page.headers["content-type"].startswith("text/html")
-    assert "Kanban Studio" in page.text
+    assert "Checking your session" in page.text
     assert health.status_code == 200
     assert health.json() == {"status": "ok", "service": "pm-backend"}
     assert hello.status_code == 200
@@ -84,3 +89,20 @@ def test_server_serves_html_and_api_over_http(running_server: str) -> None:
     assert static_paths
     assert asset is not None and asset.status_code == 200
     assert missing.status_code == 404
+
+
+def test_board_api_persists_changes_over_real_http(running_server: str) -> None:
+    with httpx.Client(base_url=running_server, timeout=2) as client:
+        initial = client.get("/api/users/demo-user/board")
+        board = initial.json()
+        board["columns"][0]["title"] = "Persisted over HTTP"
+        board["columns"][0]["cardIds"].remove("card-2")
+        board["columns"][1]["cardIds"].append("card-2")
+
+        updated = client.put("/api/users/demo-user/board", json=board)
+        reloaded = client.get("/api/users/demo-user/board")
+
+    assert initial.status_code == 200
+    assert updated.status_code == 200
+    assert reloaded.status_code == 200
+    assert reloaded.json() == board

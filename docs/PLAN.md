@@ -50,13 +50,24 @@ Verification:
 - Passed: 16 frontend unit tests (79.77% statement coverage), frontend lint, and production build.
 - Passed: 6 Playwright tests against the freshly built static export served by FastAPI; `npm run test:e2e` exited with code 0.
 
-Part 5: Database modeling
+Part 5: Database modeling - COMPLETE
 
-Now propose a database schema for the Kanban, saving it as JSON. Document the database approach in docs/ and get user sign off.
+- [x] Propose a normalized SQLite schema for users, one board per user, fixed ordered columns, and ordered cards; save the schema and board JSON shape in `docs/kanban-schema.json`.
+- [x] Document initialization, identity, persistence, and transactional write approach in `docs/DATABASE.md`.
+- [x] User approved the proposed schema and approach before Part 6 implementation.
 
-Part 6: Backend
+Part 6: Backend - COMPLETE
 
-Now add API routes to allow the backend to read and change the Kanban for a given user; test this thoroughly with backend unit tests. The database should be created if it doesn't exist.
+- [x] Create the SQLite database and seed the demo user and five-column board when the database is absent.
+- [x] Add `GET` and full-board `PUT` routes at `/api/users/{user_id}/board`.
+- [x] Validate fixed columns, card references, IDs, and content before writing; save board changes transactionally.
+- [x] Persist the Docker database path on a named Compose volume.
+- [x] Test initialization, idempotent seeding, read/write ordering, validation errors, user scoping, and real-server HTTP persistence.
+- [x] Verify database persistence across backend container recreation using the named Compose volume.
+
+Verification:
+- Passed: backend unit and real-server integration tests (17 tests, 100% coverage of backend app code).
+- Confirmed by the user in Ubuntu WSL: the Compose stack runs, the backend API works, and the board change persists after recreating the backend container.
 
 Part 7: Frontend + Backend
 

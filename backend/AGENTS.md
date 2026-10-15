@@ -11,8 +11,9 @@ This folder contains the Python FastAPI API for the project management app.
 ## Key files
 
 - `app/main.py`: FastAPI app definition and route handlers
+- `app/database.py` and `app/schemas.py`: SQLite initialization, board persistence, and API validation
 - `../frontend/out/`: static Next.js export generated during frontend and Docker builds
-- `tests/test_api.py`: verification for the initial scaffolding endpoints
+- `tests/`: API, database, and real-server integration tests
 
 ## Local development
 

@@ -1,0 +1,40 @@
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from app.constants import FIXED_COLUMN_IDS
+
+
+class CardData(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    details: str
+
+
+class ColumnData(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    cardIds: list[str]
+
+
+class BoardData(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    columns: list[ColumnData]
+    cards: dict[str, CardData]
+
+    @model_validator(mode="after")
+    def validate_board(self):
+        if tuple(column.id for column in self.columns) != FIXED_COLUMN_IDS:
+            raise ValueError("The board must contain its five fixed columns in order")
+
+        referenced_ids = [card_id for column in self.columns for card_id in column.cardIds]
+        if len(referenced_ids) != len(set(referenced_ids)):
+            raise ValueError("A card can belong to only one column")
+        if set(referenced_ids) != set(self.cards):
+            raise ValueError("Every card must appear in exactly one column")
+        if any(card_id != card.id for card_id, card in self.cards.items()):
+            raise ValueError("Each cards map key must match its card id")
+        return self

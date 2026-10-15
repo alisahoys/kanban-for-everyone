@@ -177,6 +177,7 @@ cython_debug/
 backend.log
 backend.stdout.log
 backend.stderr.log
+/backend/data/
 
 .DS_Store
 
