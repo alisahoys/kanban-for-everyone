@@ -172,5 +172,11 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+# Local service runtime files
+.backend.pid
+backend.log
+backend.stdout.log
+backend.stderr.log
+
 .DS_Store
 

@@ -1,0 +1,28 @@
+[project]
+name = "pm-backend"
+version = "0.1.0"
+description = "FastAPI backend for the PM MVP"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.115.1",
+  "uvicorn[standard]==0.32.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.3.4",
+  "httpx==0.28.1",
+  "pytest-cov",
+]
+
+[tool.pytest.ini_options]
+addopts = "--cov=app --cov-report=term-missing --cov-fail-under=80"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -4,13 +4,31 @@ Part 1: Plan
 
 Enrich this document to plan out each of these parts in detail, with substeps listed out as a checklist to be checked off by the agent, and with tests and success critieria for each. Also create an AGENTS.md file inside the frontend directory that describes the existing code there. Ensure the user checks and approves the plan.
 
-Part 2: Scaffolding
+Part 2: Scaffolding - COMPLETE
 
 Set up the Docker infrastructure, the backend in backend/ with FastAPI, and write the start and stop scripts in the scripts/ directory. This should serve example static HTML to confirm that a 'hello world' example works running locally and also make an API call.
 
-Part 3: Add in Frontend
+Completed checks:
+- [x] Build and start the Docker Compose service.
+- [x] Serve the scaffolding HTML and expose the health and hello API routes.
+- [x] Add backend unit and real-server integration tests with at least 80% coverage.
+- [x] Add start and stop scripts for Windows, macOS, and Linux.
 
-Now update so that the frontend is statically built and served, so that the app has the demo Kanban board displayed at /. Comprehensive unit and integration tests.
+Part 3: Add in Frontend - COMPLETE
+
+Checklist:
+- [x] Configure Next.js to produce a static export.
+- [x] Build the frontend in Docker and copy the static export into the runtime image.
+- [x] Serve the exported frontend at `/` from FastAPI while preserving API routes and static asset paths.
+- [x] Run Playwright against the FastAPI-served export and retain frontend unit coverage of at least 80%.
+- [x] Verify the frontend build, backend tests, browser tests, and Docker startup.
+
+Tests and success criteria:
+- `npm run build` succeeds and writes the static site to `frontend/out/`.
+- `npm run test:unit` passes and enforces at least 80% coverage.
+- `npm run test:e2e` checks the board loads and supports card creation and drag-and-drop when served by FastAPI.
+- Backend tests confirm `/` serves the Kanban board, Next.js assets load, API endpoints still work, and unknown routes return 404.
+- Docker Compose builds and starts the app; `http://localhost:8000/` shows the demo Kanban board.
 
 Part 4: Add in a fake user sign in experience
 

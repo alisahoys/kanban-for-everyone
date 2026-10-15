@@ -24,7 +24,7 @@ For the MVP, this will run locally (in a docker container)
 - Everything packaged into a Docker container
 - Use "uv" as the package manager for python in the Docker container
 - Use OpenRouter for the AI calls. An OPENROUTER_API_KEY is in .env in the project root
-- Use `openai/gpt-oss-120b` as the model
+- Use any suitable free model
 - Use SQLLite local database for the database, creating a new db if it doesn't exist
 - Start and Stop server scripts for Mac, PC, Linux in scripts/
 
@@ -34,11 +34,16 @@ A working MVP of the frontend has been built and is already in frontend. This is
 
 ## Color Scheme
 
-- Accent Yellow: `#ecad0a` - accent lines, highlights
-- Blue Primary: `#209dd7` - links, key sections
-- Purple Secondary: `#753991` - submit buttons, important actions
-- Dark Navy: `#032147` - main headings
-- Gray Text: `#888888` - supporting text, labels
+- Main background	■ Warm ivory	#FAF4EF
+- Column background	■ Oat beige	#E8D8C8
+- Card background	■ White	#FFFFFF
+- Soft pink	■ Blush	#F2D5DD
+- Primary accent	■ Dusty rose	#D59AAA
+- Buttons / active states	■ Mauve rose	#B56B85
+- Strong accent	■ Deep berry	#783D58
+- Main text	■ Cocoa ink	#43333A
+- Secondary text	■ Muted taupe	#89777B
+- Borders	■ Rose beige	#E4D4CE
 
 ## Coding standards
 

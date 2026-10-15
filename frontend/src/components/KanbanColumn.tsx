@@ -26,23 +26,23 @@ export const KanbanColumn = ({
     <section
       ref={setNodeRef}
       className={clsx(
-        "flex min-h-[520px] flex-col rounded-3xl border border-[var(--stroke)] bg-[var(--surface-strong)] p-4 shadow-[var(--shadow)] transition",
-        isOver && "ring-2 ring-[var(--accent-yellow)]"
+        "flex min-h-[520px] flex-col rounded-3xl border border-[var(--border)] bg-[var(--column)] p-4 shadow-[var(--shadow)] transition",
+        isOver && "ring-2 ring-[var(--primary-accent)]"
       )}
       data-testid={`column-${column.id}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="w-full">
           <div className="flex items-center gap-3">
-            <div className="h-2 w-10 rounded-full bg-[var(--accent-yellow)]" />
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--gray-text)]">
+            <div className="h-2 w-10 rounded-full bg-[var(--primary-accent)]" />
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
               {cards.length} cards
             </span>
           </div>
           <input
             value={column.title}
             onChange={(event) => onRename(column.id, event.target.value)}
-            className="mt-3 w-full bg-transparent font-display text-lg font-semibold text-[var(--navy-dark)] outline-none"
+            className="mt-3 w-full bg-transparent font-display text-lg font-semibold text-[var(--ink)] outline-none"
             aria-label="Column title"
           />
         </div>
@@ -58,7 +58,7 @@ export const KanbanColumn = ({
           ))}
         </SortableContext>
         {cards.length === 0 && (
-          <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-[var(--stroke)] px-3 py-6 text-center text-xs font-semibold uppercase tracking-[0.2em] text-[var(--gray-text)]">
+          <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
             Drop a card here
           </div>
         )}
