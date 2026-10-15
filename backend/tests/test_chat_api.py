@@ -42,6 +42,8 @@ def test_chat_uses_persisted_board_question_and_history_without_changing_board(t
             "name": "Customer insights",
             "description": "Turn customer feedback into product improvements.",
         }
+        board["cards"]["card-1"]["priority"] = "high"
+        board["cards"]["card-1"]["dueDate"] = "2027-03-12"
         client.put("/api/users/demo-user/board", json=board)
         history = [
             {"role": "user", "content": "How many tasks are there?"},
@@ -102,6 +104,9 @@ def test_chat_preserves_project_when_model_update_omits_it(tmp_path):
         updated_board["columns"][0]["cardIds"].remove("card-1")
         updated_board["columns"][4]["cardIds"].append("card-1")
         del updated_board["project"]
+        for card_update in updated_board["cards"].values():
+            del card_update["priority"]
+            del card_update["dueDate"]
         openrouter.reply = json.dumps(
             {
                 "message": "I moved Align roadmap themes to Done.",
@@ -116,6 +121,9 @@ def test_chat_preserves_project_when_model_update_omits_it(tmp_path):
 
         expected_board = deepcopy(updated_board)
         expected_board["project"] = board["project"]
+        for card_id, card_update in expected_board["cards"].items():
+            card_update["priority"] = board["cards"][card_id]["priority"]
+            card_update["dueDate"] = board["cards"][card_id]["dueDate"]
         assert response.status_code == 200
         assert response.json() == {
             "message": "I moved Align roadmap themes to Done.",

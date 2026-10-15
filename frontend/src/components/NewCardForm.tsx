@@ -1,9 +1,20 @@
 import { useState, type FormEvent } from "react";
+import type { CardPriority } from "@/lib/kanban";
 
-const initialFormState = { title: "", details: "" };
+const initialFormState = {
+  title: "",
+  details: "",
+  priority: null as CardPriority | null,
+  dueDate: "",
+};
 
 type NewCardFormProps = {
-  onAdd: (title: string, details: string) => void;
+  onAdd: (
+    title: string,
+    details: string,
+    priority: CardPriority | null,
+    dueDate: string | null
+  ) => void;
 };
 
 export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
@@ -15,7 +26,12 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
     if (!formState.title.trim()) {
       return;
     }
-    onAdd(formState.title.trim(), formState.details.trim());
+    onAdd(
+      formState.title.trim(),
+      formState.details.trim(),
+      formState.priority,
+      formState.dueDate || null
+    );
     setFormState(initialFormState);
     setIsOpen(false);
   };
@@ -42,6 +58,39 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
             rows={3}
             className="w-full resize-none rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--muted)] outline-none transition focus:border-[var(--mauve)]"
           />
+          <div className="space-y-3">
+            <label className="grid gap-1 text-xs font-semibold text-[var(--muted)]">
+              Priority
+              <select
+                aria-label="Priority"
+                value={formState.priority ?? ""}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    priority: (event.target.value || null) as CardPriority | null,
+                  }))
+                }
+                className="w-full min-w-0 rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--ink)]"
+              >
+                <option value="">No priority</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-semibold text-[var(--muted)]">
+              Due date
+              <input
+                aria-label="Due date"
+                type="date"
+                value={formState.dueDate}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, dueDate: event.target.value }))
+                }
+                className="w-full min-w-0 rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--ink)]"
+              />
+            </label>
+          </div>
           <div className="flex items-center gap-2">
             <button
               type="submit"

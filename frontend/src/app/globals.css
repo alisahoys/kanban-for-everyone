@@ -31,6 +31,14 @@ body {
   margin: 0;
 }
 
+.project-floral-surface {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(rgba(250, 244, 239, 0.68), rgba(250, 244, 239, 0.68)),
+    url("/chat-floral-pattern.svg");
+  background-size: auto, 560px 560px;
+}
+
 .font-display {
   font-family: var(--font-display), "Segoe UI", sans-serif;
 }

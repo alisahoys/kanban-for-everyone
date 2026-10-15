@@ -5,7 +5,13 @@ describe("KanbanCardPreview", () => {
   it("renders the card title and details", () => {
     render(
       <KanbanCardPreview
-        card={{ id: "preview-1", title: "Preview title", details: "Preview details" }}
+        card={{
+          id: "preview-1",
+          title: "Preview title",
+          details: "Preview details",
+          priority: null,
+          dueDate: null,
+        }}
       />
     );
 

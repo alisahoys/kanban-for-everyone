@@ -85,6 +85,8 @@ def test_get_board_seeds_demo_user_and_returns_ordered_board(client: TestClient)
         "id": "card-1",
         "title": "Align roadmap themes",
         "details": "Draft quarterly themes with impact statements and metrics.",
+        "priority": None,
+        "dueDate": None,
     }
 
 
@@ -98,6 +100,8 @@ def test_put_board_persists_edits_moves_and_deletes(client: TestClient) -> None:
     board["columns"][0]["cardIds"].remove("card-2")
     board["columns"][1]["cardIds"].append("card-2")
     board["cards"]["card-2"]["title"] = "Moved customer signals"
+    board["cards"]["card-2"]["priority"] = "high"
+    board["cards"]["card-2"]["dueDate"] = "2027-03-12"
     del board["cards"]["card-8"]
     board["columns"][4]["cardIds"].remove("card-8")
 
@@ -127,6 +131,8 @@ def test_board_routes_return_not_found_for_unknown_user(client: TestClient) -> N
         lambda board: board["cards"].pop("card-1"),
         lambda board: board["cards"]["card-1"].update({"id": "different-id"}),
         lambda board: board["project"].update({"name": ""}),
+        lambda board: board["cards"]["card-1"].update({"priority": "urgent"}),
+        lambda board: board["cards"]["card-1"].update({"dueDate": "2027-02-30"}),
     ],
 )
 def test_put_board_rejects_invalid_board_structure(

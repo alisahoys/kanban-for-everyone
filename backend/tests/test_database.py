@@ -71,6 +71,8 @@ def test_board_ids_are_scoped_per_user_and_foreign_keys_are_enabled(tmp_path) ->
     second_user_board = load_board(database_path, "second-user")
     assert first_user_board is not None
     assert first_user_board["cards"]["card-1"]["title"] == "Align roadmap themes"
+    assert first_user_board["cards"]["card-1"]["priority"] is None
+    assert first_user_board["cards"]["card-1"]["dueDate"] is None
     assert second_user_board == {
         "project": {
             "name": "Product Planning",
@@ -88,6 +90,8 @@ def test_board_ids_are_scoped_per_user_and_foreign_keys_are_enabled(tmp_path) ->
                 "id": "card-1",
                 "title": "Other user's task",
                 "details": "Separate board",
+                "priority": None,
+                "dueDate": None,
             }
         },
     }
@@ -162,7 +166,11 @@ def test_existing_database_migration_preserves_board_and_adds_project_defaults(
         "description": "Plan product improvements from roadmap discovery through design, review, and launch.",
     }
     assert migrated["columns"] == INITIAL_COLUMNS
-    assert migrated["cards"]["card-1"] == INITIAL_CARDS["card-1"]
+    assert migrated["cards"]["card-1"] == {
+        **INITIAL_CARDS["card-1"],
+        "priority": None,
+        "dueDate": None,
+    }
 
 
 def test_database_write_transaction_rolls_back_on_constraint_failure(tmp_path) -> None:

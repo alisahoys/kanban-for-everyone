@@ -112,6 +112,8 @@ def initialize_database(database_path: Path = DATABASE_PATH) -> None:
                 column_id TEXT NOT NULL,
                 title TEXT NOT NULL,
                 details TEXT NOT NULL DEFAULT '',
+                priority TEXT CHECK (priority IN ('low', 'medium', 'high')) DEFAULT NULL,
+                due_date TEXT DEFAULT NULL,
                 position INTEGER NOT NULL CHECK (position >= 0),
                 PRIMARY KEY (board_id, id),
                 UNIQUE (board_id, column_id, position),
@@ -133,6 +135,17 @@ def initialize_database(database_path: Path = DATABASE_PATH) -> None:
                 "ALTER TABLE boards ADD COLUMN description TEXT NOT NULL DEFAULT "
                 "'Plan product improvements from roadmap discovery through design, review, and launch.'"
             )
+
+        card_columns = {
+            row["name"] for row in connection.execute("PRAGMA table_info(cards)")
+        }
+        if "priority" not in card_columns:
+            connection.execute(
+                "ALTER TABLE cards ADD COLUMN priority TEXT "
+                "CHECK (priority IN ('low', 'medium', 'high'))"
+            )
+        if "due_date" not in card_columns:
+            connection.execute("ALTER TABLE cards ADD COLUMN due_date TEXT")
 
         connection.execute(
             "INSERT OR IGNORE INTO users (id, username) VALUES (?, ?)",
@@ -185,7 +198,7 @@ def load_board(database_path: Path, user_id: str) -> dict | None:
             (board_id,),
         ).fetchall()
         cards = connection.execute(
-            """SELECT id, column_id, title, details FROM cards
+            """SELECT id, column_id, title, details, priority, due_date FROM cards
                WHERE board_id = ? ORDER BY column_id, position""",
             (board_id,),
         ).fetchall()
@@ -195,6 +208,8 @@ def load_board(database_path: Path, user_id: str) -> dict | None:
             "id": card["id"],
             "title": card["title"],
             "details": card["details"],
+            "priority": card["priority"],
+            "dueDate": card["due_date"],
         }
         for card in cards
     }
@@ -242,14 +257,16 @@ def save_board(database_path: Path, user_id: str, board_data: BoardData) -> bool
                 card = board_data.cards[card_id]
                 connection.execute(
                     """INSERT INTO cards
-                       (board_id, id, column_id, title, details, position)
-                       VALUES (?, ?, ?, ?, ?, ?)""",
+                       (board_id, id, column_id, title, details, priority, due_date, position)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         board_id,
                         card.id,
                         column.id,
                         card.title,
                         card.details,
+                        card.priority,
+                        card.dueDate.isoformat() if card.dueDate else None,
                         card_position,
                     ),
                 )

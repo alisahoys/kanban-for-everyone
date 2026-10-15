@@ -1,8 +1,9 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, vi } from "vitest";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { createMockBoardApi } from "@/test/mockBoardApi";
+import { initialData } from "@/lib/kanban";
 
 const getFirstColumn = () => screen.getAllByTestId(/column-/i)[0];
 const renderBoard = () => render(<KanbanBoard onSignOut={() => {}} />);
@@ -72,5 +73,27 @@ describe("KanbanBoard", () => {
     await userEvent.click(deleteButton);
 
     expect(within(column).queryByText("New card")).not.toBeInTheDocument();
+  });
+
+  it("edits card priority and due date and marks past dates overdue", async () => {
+    const board = structuredClone(initialData);
+    board.cards["card-1"].priority = "high";
+    board.cards["card-1"].dueDate = "2000-01-01";
+    vi.stubGlobal("fetch", vi.fn(createMockBoardApi(board).fetchBoard));
+    renderBoard();
+
+    const card = await screen.findByTestId("card-card-1");
+    expect(await within(card).findByText("Overdue: Jan 1, 2000")).toBeInTheDocument();
+    await userEvent.click(
+      within(card).getByRole("button", { name: "Edit title: Align roadmap themes" })
+    );
+    await userEvent.selectOptions(within(card).getByLabelText("Card priority"), "medium");
+    fireEvent.change(within(card).getByLabelText("Due date"), {
+      target: { value: "2099-03-12" },
+    });
+    await userEvent.click(within(card).getByRole("button", { name: "Save" }));
+
+    expect(await within(card).findByText("medium priority")).toBeInTheDocument();
+    expect(within(card).getByText("Due Mar 12, 2099")).toBeInTheDocument();
   });
 });

@@ -56,11 +56,11 @@ export const ChatSidebar = ({
   };
 
   return (
-    <div className="min-w-0 min-[1400px]:col-start-2 min-[1400px]:row-start-1">
+    <div className="mx-auto w-full max-w-4xl min-w-0">
       <button
         aria-controls="board-chat-panel"
         aria-expanded={expanded}
-        className="mb-4 flex w-full items-center justify-between rounded-2xl border border-[var(--border)] bg-white/90 px-5 py-4 text-left text-sm font-semibold text-[var(--ink)] shadow-[var(--shadow)] min-[1400px]:hidden"
+        className="mb-4 flex w-full items-center justify-between rounded-2xl border border-[var(--border)] bg-white/90 px-5 py-4 text-left text-sm font-semibold text-[var(--ink)] shadow-[var(--shadow)]"
         onClick={() => setExpanded((open) => !open)}
         type="button"
       >
@@ -72,7 +72,7 @@ export const ChatSidebar = ({
 
       <aside
         aria-label="AI assistant"
-        className={`${expanded ? "flex" : "hidden"} min-h-[480px] flex-col overflow-hidden rounded-3xl border border-[var(--border)] bg-white/95 shadow-[var(--shadow)] min-[1400px]:sticky min-[1400px]:top-6 min-[1400px]:flex min-[1400px]:h-[min(720px,calc(100dvh-3rem))]`}
+        className={`${expanded ? "flex" : "hidden"} h-[min(640px,75dvh)] min-h-[400px] flex-col overflow-hidden rounded-3xl border border-[var(--border)] bg-white/95 shadow-[var(--shadow)]`}
         id="board-chat-panel"
       >
         <header className="border-b border-[var(--border)] bg-[var(--surface)] px-5 py-4">

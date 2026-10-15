@@ -3,6 +3,15 @@ import { initialData, type BoardData } from "@/lib/kanban";
 export const demoUserId = "demo-user";
 const legacyBoardKey = "pm-kanban-board-v1";
 const migrationKey = "pm-kanban-api-migrated-v1";
+const priorities = ["low", "medium", "high"];
+
+const isCalendarDate = (value: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+};
 
 const boardUrl = () => {
   const apiBase =
@@ -62,23 +71,38 @@ const parseBoardData = (value: unknown): BoardData | null => {
     referencedIds.length === Object.keys(cards).length &&
     referencedIds.every((id) => {
       const card = cards[id];
+      const candidateCard = card as Record<string, unknown> | null;
       return (
-        typeof card === "object" &&
-        card !== null &&
-        !Array.isArray(card) &&
-        (card as BoardData["cards"][string]).id === id &&
-        typeof (card as BoardData["cards"][string]).title === "string" &&
-        typeof (card as BoardData["cards"][string]).details === "string"
+        typeof candidateCard === "object" &&
+        candidateCard !== null &&
+        !Array.isArray(candidateCard) &&
+        candidateCard.id === id &&
+        typeof candidateCard.title === "string" &&
+        typeof candidateCard.details === "string" &&
+        (candidateCard.priority === undefined ||
+          candidateCard.priority === null ||
+          priorities.includes(String(candidateCard.priority))) &&
+        (candidateCard.dueDate === undefined ||
+          candidateCard.dueDate === null ||
+          (typeof candidateCard.dueDate === "string" &&
+            isCalendarDate(candidateCard.dueDate)))
       );
     });
   if (!validCards) {
     return null;
   }
 
+  const normalizedCards = Object.fromEntries(
+    referencedIds.map((id) => {
+      const card = cards[id] as BoardData["cards"][string];
+      return [id, { ...card, priority: card.priority ?? null, dueDate: card.dueDate ?? null }];
+    })
+  );
+
   return {
     project: candidate.project ?? initialData.project,
     columns: candidate.columns,
-    cards: candidate.cards,
+    cards: normalizedCards,
   };
 };
 

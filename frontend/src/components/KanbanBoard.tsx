@@ -16,7 +16,12 @@ import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { ProjectDetailsEditor } from "@/components/ProjectDetailsEditor";
-import { createId, moveCard, type BoardData } from "@/lib/kanban";
+import {
+  createId,
+  moveCard,
+  type BoardData,
+  type CardPriority,
+} from "@/lib/kanban";
 import { useBoardSync } from "@/hooks/useBoardSync";
 
 type KanbanBoardProps = {
@@ -141,13 +146,19 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
     }));
   };
 
-  const handleAddCard = (columnId: string, title: string, details: string) => {
+  const handleAddCard = (
+    columnId: string,
+    title: string,
+    details: string,
+    priority: CardPriority | null,
+    dueDate: string | null
+  ) => {
     const id = createId("card");
     sync.updateBoard((prev) => ({
       ...prev,
       cards: {
         ...prev.cards,
-        [id]: { id, title, details: details || "No details yet." },
+        [id]: { id, title, details: details || "No details yet.", priority, dueDate },
       },
       columns: prev.columns.map((column) =>
         column.id === columnId
@@ -157,12 +168,18 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
     }));
   };
 
-  const handleEditCard = (cardId: string, title: string, details: string) => {
+  const handleEditCard = (
+    cardId: string,
+    title: string,
+    details: string,
+    priority: CardPriority | null,
+    dueDate: string | null
+  ) => {
     sync.updateBoard((prev) => ({
       ...prev,
       cards: {
         ...prev.cards,
-        [cardId]: { ...prev.cards[cardId], title, details },
+        [cardId]: { ...prev.cards[cardId], title, details, priority, dueDate },
       },
     }));
   };
@@ -192,8 +209,8 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
     <div
       className={
         activeCardId
-          ? "kanban-drag-active relative overflow-hidden"
-          : "relative overflow-hidden"
+          ? "kanban-drag-active project-floral-surface relative overflow-hidden"
+          : "project-floral-surface relative overflow-hidden"
       }
       data-dragging={activeCardId !== null}
     >
@@ -261,12 +278,8 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
           </div>
         </header>
 
-        <div className="grid items-start gap-6 min-[1400px]:grid-cols-[minmax(0,1fr)_360px]">
-          <ChatSidebar
-            beforeSend={sync.saveNow}
-            onBoardUpdate={(nextBoard) => sync.updateBoard(() => nextBoard)}
-          />
-          <section className="min-w-0 overflow-x-auto pb-2 min-[1400px]:col-start-1 min-[1400px]:row-start-1">
+        <div className="space-y-8">
+          <section className="min-w-0 overflow-x-auto pb-2">
             <DndContext
               id="kanban-board-dnd"
               sensors={sensors}
@@ -276,7 +289,7 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
               onDragEnd={handleDragEnd}
               onDragCancel={handleDragCancel}
             >
-              <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 min-[1400px]:min-w-[960px]">
+              <section className="grid gap-6 sm:grid-cols-2 lg:min-w-[1200px] lg:grid-cols-5">
                 {board.columns.map((column) => (
                   <KanbanColumn
                     key={column.id}
@@ -306,6 +319,10 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
               </DragOverlay>
             </DndContext>
           </section>
+          <ChatSidebar
+            beforeSend={sync.saveNow}
+            onBoardUpdate={(nextBoard) => sync.updateBoard(() => nextBoard)}
+          />
         </div>
       </main>
     </div>

@@ -64,6 +64,10 @@ describe("loadBoard", () => {
   it("adds default project details when migrating an older saved board", async () => {
     const legacyBoard = structuredClone(initialData);
     delete (legacyBoard as Partial<typeof legacyBoard>).project;
+    for (const card of Object.values(legacyBoard.cards)) {
+      delete (card as Partial<typeof card>).priority;
+      delete (card as Partial<typeof card>).dueDate;
+    }
     legacyBoard.cards["card-1"].title = "Browser edit";
     localStorage.setItem("pm-kanban-board-v1", JSON.stringify(legacyBoard));
     vi.stubGlobal(
@@ -79,6 +83,8 @@ describe("loadBoard", () => {
     const board = await loadBoard();
 
     expect(board.project).toEqual(initialData.project);
+    expect(board.cards["card-1"].priority).toBeNull();
+    expect(board.cards["card-1"].dueDate).toBeNull();
     expect(board.cards["card-1"].title).toBe("Browser edit");
   });
 });

@@ -72,7 +72,7 @@ def create_app(
     @application.post(
         "/api/users/{user_id}/chat",
         response_model=ChatResponse,
-        response_model_exclude_none=True,
+        response_model_exclude_unset=True,
     )
     async def chat_with_board(
         user_id: str, chat_request: ChatRequest, request: Request
@@ -109,6 +109,21 @@ def create_app(
                 board_update.setdefault(
                     "project", current_board.project.model_dump(mode="json")
                 )
+                update_cards = board_update.get("cards")
+                if isinstance(update_cards, dict):
+                    for card_id, card_update in update_cards.items():
+                        if not isinstance(card_update, dict):
+                            continue
+                        current_card = current_board.cards.get(card_id)
+                        card_update.setdefault(
+                            "priority", current_card.priority if current_card else None
+                        )
+                        card_update.setdefault(
+                            "dueDate",
+                            current_card.dueDate.isoformat()
+                            if current_card and current_card.dueDate
+                            else None,
+                        )
 
         try:
             model_reply = StructuredChatReply.model_validate(decoded_reply)
@@ -126,6 +141,8 @@ def create_app(
                 raise HTTPException(status_code=404, detail="Board not found")
             resulting_board = model_reply.board_update
 
+        if resulting_board is None:
+            return ChatResponse(message=model_reply.message)
         return ChatResponse(message=model_reply.message, board=resulting_board)
 
     application.mount(

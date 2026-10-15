@@ -169,33 +169,22 @@ Tests and success criteria:
 - Project name and description can be edited in the UI and persist through reload.
 - The AI receives the persisted project details and uses them in project descriptions without inventing unsupported facts.
 
-Part 12: Card priority and due dates - NOT STARTED
+Part 12: Card priority and due dates - COMPLETE
 
 Add optional priority and due date fields to cards to make planning and upcoming work visible. Assignees are outside this part's scope.
 
-- [ ] Extend card data validation, SQLite persistence, and board API support for optional priority and due date fields; preserve existing cards during database upgrades.
-- [ ] Add controls for setting and editing a card's priority and due date.
-- [ ] Display priority and due date clearly on cards, including overdue dates, while keeping columns readable on narrow screens.
-- [ ] Keep card creation, editing, drag-and-drop, AI board updates, and legacy seeded cards compatible with the new optional fields.
-- [ ] Cover field validation, persistence and migration, card UI behavior, and API-backed browser interactions with automated tests.
+- [x] Extend card data validation, SQLite persistence, and board API support for optional priority and due date fields; preserve existing cards during database upgrades.
+- [x] Add controls for setting and editing a card's priority and due date.
+- [x] Display priority and due date clearly on cards, including overdue dates, while keeping columns readable on narrow screens.
+- [x] Keep card creation, editing, drag-and-drop, AI board updates, and legacy seeded cards compatible with the new optional fields.
+- [x] Cover field validation, persistence and migration, card UI behavior, and API-backed browser interactions with automated tests.
+
+Verification:
+- Passed: backend suite (38 tests), frontend unit suite (27 tests, 88.64% statement coverage), frontend lint, and production build.
+- Passed: 12 Playwright tests, including card creation/editing with priority and due date, board persistence, AI updates, and narrow-screen layout.
+- Passed: Docker Compose image rebuild and live database migration check; project details and all 8 existing cards remained intact, with both new fields set to null.
 
 Tests and success criteria:
 - Priority uses a small defined set of values, and a due date is either absent or a valid calendar date.
 - Existing cards remain valid and unchanged after database upgrade; new and edited values persist through reload.
 - The card layout remains usable on desktop and narrow screens.
-
-Part 13: Preview and undo AI board changes - NOT STARTED
-
-Let users review an AI-proposed board update before saving it, then offer a direct way to undo an applied update.
-
-- [ ] Change the chat update flow so the AI can return a validated proposed board without saving it immediately.
-- [ ] Show a concise summary of the proposed card additions, edits, and moves, with Apply and Discard actions.
-- [ ] Save an accepted proposal through the existing board API and update the visible board only after the save succeeds.
-- [ ] Keep the prior board snapshot after an AI update and offer an Undo action that restores it through the board API; clear the undo option when another board change makes that snapshot stale.
-- [ ] Cover proposals with and without changes, Apply, Discard, save failures, Undo, and stale undo state with automated frontend, backend, and browser tests.
-
-Tests and success criteria:
-- An AI-proposed update never changes persisted or visible board data until the user applies it.
-- Discard leaves the board unchanged; Apply saves and displays the proposal.
-- Undo restores the exact board state that existed before the accepted AI update and persists the restoration.
-- Chat remains usable at desktop and narrow viewport sizes, and automated tests do not require a live AI provider.

@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -11,6 +12,8 @@ class CardData(BaseModel):
     id: str = Field(min_length=1)
     title: str = Field(min_length=1)
     details: str
+    priority: Literal["low", "medium", "high"] | None
+    dueDate: date | None
 
 
 class ColumnData(BaseModel):

@@ -175,21 +175,24 @@ test("keeps the narrow chat panel in page flow so the board stays usable", async
   await expect(backlog.getByText("Board stays usable")).toBeVisible();
 });
 
-test("shows chat beside the board on a wide desktop viewport", async ({ page }) => {
+test("keeps the board full-width and places chat below it on desktop", async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
   await signIn(page);
 
+  const openChat = page.getByRole("button", { name: /open chat/i });
+  await expect(openChat).toBeVisible();
+  await openChat.click();
   const sidebar = page.getByRole("complementary", { name: "AI assistant" });
   await expect(sidebar).toBeVisible();
   await expect(page.getByLabel("Ask the assistant")).toBeVisible();
-  await expect(page.getByRole("button", { name: /open chat/i })).toBeHidden();
 
   const reviewBox = await page.getByTestId("column-col-review").boundingBox();
   const sidebarBox = await sidebar.boundingBox();
   if (!reviewBox || !sidebarBox) {
     throw new Error("Unable to resolve the desktop board and sidebar positions.");
   }
-  expect(reviewBox.x + reviewBox.width).toBeLessThan(sidebarBox.x);
+  expect(sidebarBox.y).toBeGreaterThan(reviewBox.y + reviewBox.height);
+  expect(reviewBox.width).toBeGreaterThanOrEqual(220);
 });
 
 test("adds a card to a column", async ({ page }) => {
@@ -198,10 +201,17 @@ test("adds a card to a column", async ({ page }) => {
   await firstColumn.getByRole("button", { name: /add a card/i }).click();
   await firstColumn.getByPlaceholder("Card title").fill("Playwright card");
   await firstColumn.getByPlaceholder("Details").fill("Added via e2e.");
+  await firstColumn.getByLabel("Priority").selectOption("high");
+  await firstColumn.getByLabel("Due date").fill("2027-03-12");
   await firstColumn.getByRole("button", { name: /add card/i }).click();
   await expect(firstColumn.getByText("Playwright card")).toBeVisible();
   await expectBoardStored(page, (board) =>
-    Object.values(board.cards).some((card) => card.title === "Playwright card")
+    Object.values(board.cards).some(
+      (card) =>
+        card.title === "Playwright card" &&
+        card.priority === "high" &&
+        card.dueDate === "2027-03-12"
+    )
   );
 });
 
@@ -249,11 +259,20 @@ test("edits card text and restores the arrow cursor on press", async ({ page }) 
   await detailsInput.fill("Updated with Playwright.");
   await detailsInput.press("Enter");
 
+  await card.getByRole("button", { name: "Edit title: Updated roadmap themes" }).click();
+  await card.getByLabel("Card priority").selectOption("medium");
+  await card.getByLabel("Due date").fill("2027-03-12");
+  await card.getByRole("button", { name: "Save" }).click();
+
   await expect(card.getByRole("heading", { name: "Updated roadmap themes" })).toBeVisible();
   await expect(card.getByText("Updated with Playwright.")).toBeVisible();
+  await expect(card.getByText("medium priority")).toBeVisible();
+  await expect(card.getByText("Due Mar 12, 2027")).toBeVisible();
   await expectBoardStored(page, (board) =>
     board.cards["card-1"]?.title === "Updated roadmap themes" &&
-      board.cards["card-1"]?.details === "Updated with Playwright."
+      board.cards["card-1"]?.details === "Updated with Playwright." &&
+      board.cards["card-1"]?.priority === "medium" &&
+      board.cards["card-1"]?.dueDate === "2027-03-12"
   );
 });
 
