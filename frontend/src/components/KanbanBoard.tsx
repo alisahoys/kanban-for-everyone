@@ -153,7 +153,12 @@ export const KanbanBoard = () => {
           </section>
           <DragOverlay>
             {activeCard ? (
-              <div className="w-[260px]">
+              <div
+                key={activeCard.id}
+                id={`drag-overlay-${activeCard.id}`}
+                data-testid={`drag-overlay-${activeCard.id}`}
+                className="w-[260px]"
+              >
                 <KanbanCardPreview card={activeCard} />
               </div>
             ) : null}

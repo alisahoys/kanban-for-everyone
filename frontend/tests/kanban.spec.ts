@@ -38,4 +38,6 @@ test("moves a card between columns", async ({ page }) => {
   );
   await page.mouse.up();
   await expect(targetColumn.getByTestId("card-card-1")).toBeVisible();
+  await expect(page.getByTestId("drag-overlay-card-1")).toBeVisible();
+  await expect(page.getByTestId("drag-overlay-card-1")).toBeHidden();
 });
