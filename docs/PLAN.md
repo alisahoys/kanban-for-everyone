@@ -88,15 +88,19 @@ Verification:
 - Passed against the packaged Docker app: all 7 Playwright tests against port 8000, health and board API requests, and frontend serving.
 - Passed Docker persistence check: a temporary API board change survived `docker compose up -d --force-recreate backend`; the original 9-card board was restored and verified afterward. The named volume was preserved.
 
-Part 8: AI connectivity - NOT STARTED
+Part 8: AI connectivity - COMPLETE
 
 Add a small server-side OpenRouter integration and verify that a configured model can answer a simple `2+2` prompt. Keep the API key on the backend and out of logs and browser code.
 
-- [ ] Read `OPENROUTER_API_KEY` from the backend environment and return a clear configuration error when it is missing; never expose or log its value.
-- [ ] Add a small backend OpenRouter client using a suitable free model and a bounded request timeout.
-- [ ] Add unit tests for successful responses, provider errors, timeouts, and missing configuration using mocked HTTP responses.
-- [ ] Add an opt-in smoke-test command that sends `2+2` to OpenRouter and checks that the returned answer is correct; do not require a live key for the normal test suite.
-- [ ] Document how to run the smoke test without printing the key.
+- [x] Read `OPENROUTER_API_KEY` from the backend environment and return a clear configuration error when it is missing; never expose or log its value.
+- [x] Add a small backend OpenRouter client using a suitable free model and a bounded request timeout.
+- [x] Add unit tests for successful responses, provider errors, timeouts, and missing configuration using mocked HTTP responses.
+- [x] Add an opt-in smoke-test command that sends `2+2` to OpenRouter and checks that the returned answer is correct; do not require a live key for the normal test suite.
+- [x] Document how to run the smoke test without printing the key.
+
+Verification:
+- Passed: backend test suite (25 tests, including mocked OpenRouter success, provider error, timeout, missing-key, and smoke-answer checks).
+- Confirmed by the user in Docker Compose: the live OpenRouter smoke test returned `4` and passed. The check remains opt-in.
 
 Tests and success criteria:
 - Unit tests pass without network access or a configured API key.

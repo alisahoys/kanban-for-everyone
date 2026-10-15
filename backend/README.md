@@ -18,3 +18,4 @@ uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 - Open http://localhost:8000/ to view the statically exported Kanban board
 - Call http://localhost:8000/api/health
+- Run the optional live OpenRouter check as described in [docs/OPENROUTER.md](../docs/OPENROUTER.md)
