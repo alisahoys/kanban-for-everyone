@@ -34,3 +34,19 @@ body {
 .font-display {
   font-family: var(--font-display), "Segoe UI", sans-serif;
 }
+
+.kanban-column-surface {
+  background-color: var(--column);
+  background-image: radial-gradient(
+    circle,
+    transparent 4.5px,
+    rgba(120, 61, 88, 0.18) 5px,
+    transparent 5.5px
+  );
+  background-size: 32px 32px;
+}
+
+.kanban-drag-active,
+.kanban-drag-active * {
+  cursor: default !important;
+}

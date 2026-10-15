@@ -4,12 +4,14 @@ This directory contains the Next.js-based frontend for the project management MV
 
 ## Current state
 
-- The app is a frontend demo with a Kanban board and drag-and-drop interactions
+- The app is a frontend demo with a sign-in gate and a Kanban board with drag-and-drop interactions
 - `next.config.ts` configures a static export to `out/`
-- The main entry point is `src/app/page.tsx`, which renders the board
+- The main entry point is `src/app/page.tsx`, which renders `SignInGate`; the board appears after entering the demo credentials (`user` / `password`)
 - Board logic and state helpers live under `src/lib/kanban.ts`
 - UI building blocks such as cards, columns, and forms live under `src/components/`
 - The project already includes unit tests and Playwright smoke tests
+- The demo sign-in is client-side only and stores its state in `sessionStorage`; it is not backend authentication
+- Board changes are saved in browser `localStorage` and survive reload and sign-out on that browser; the board is not yet persisted by the backend
 
 ## Common commands
 
@@ -22,4 +24,4 @@ npm run test:e2e
 
 ## Notes
 
-This frontend is not yet connected to the backend API or authentication flow. The static export is served by FastAPI in the Docker image; Playwright runs against that FastAPI-served export.
+This frontend is not yet connected to the backend API or real authentication. The static export is served by FastAPI in the Docker image; Playwright runs against that FastAPI-served export.

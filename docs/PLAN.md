@@ -21,7 +21,8 @@ Checklist:
 - [x] Build the frontend in Docker and copy the static export into the runtime image.
 - [x] Serve the exported frontend at `/` from FastAPI while preserving API routes and static asset paths.
 - [x] Run Playwright against the FastAPI-served export and retain useful frontend unit tests; review coverage without a fixed minimum.
-- [x] Verify the frontend build, backend tests, browser tests, and Docker startup.
+- [x] Verify the frontend build, backend tests, and browser tests.
+- [x] Verify Docker Compose builds and starts the app.
 
 Tests and success criteria:
 - `npm run build` succeeds and writes the static site to `frontend/out/`.
@@ -30,9 +31,24 @@ Tests and success criteria:
 - Backend tests confirm `/` serves the Kanban board, Next.js assets load, API endpoints still work, and unknown routes return 404.
 - Docker Compose builds and starts the app; `http://localhost:8000/` shows the demo Kanban board.
 
-Part 4: Add in a fake user sign in experience
+Current verification for Part 3:
+- Passed: frontend build, 11 frontend unit tests (75.85% statement coverage), frontend lint, 6 backend tests (100% coverage of `app/main.py`), and 5 browser tests against the freshly built export served by FastAPI.
+- Confirmed by the user: Docker Compose build/startup and local app check succeeded.
 
-Now update so that on first hitting /, you need to log in with dummy credentials ("user", "password") in order to see the Kanban, and you can log out. Comprehensive tests.
+Part 4: Add a fake user sign-in experience - COMPLETE
+
+Require sign-in on `/` with the demo credentials (`user` / `password`) before showing the Kanban, and provide sign-out. The sign-in session is stored for the current browser tab only. Board edits are stored in browser local storage so they survive sign-out and reload; this is not backend or multi-device persistence.
+
+- [x] Show the sign-in form before rendering the board.
+- [x] Accept only the configured demo username and password, with an accessible error for invalid credentials.
+- [x] Restore sign-in for the current tab session and clear it on sign-out.
+- [x] Preserve board edits across sign-out and reload using browser local storage.
+- [x] Cover the gate with unit tests and test sign-in, reload, sign-out, and board interactions in Playwright against the FastAPI-served export.
+- [x] Run frontend unit coverage, lint, production build, and the Playwright suite.
+
+Verification:
+- Passed: 16 frontend unit tests (79.77% statement coverage), frontend lint, and production build.
+- Passed: 6 Playwright tests against the freshly built static export served by FastAPI; `npm run test:e2e` exited with code 0.
 
 Part 5: Database modeling
 

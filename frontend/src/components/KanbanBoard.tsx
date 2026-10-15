@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -16,8 +16,31 @@ import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
 import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
 
-export const KanbanBoard = () => {
-  const [board, setBoard] = useState<BoardData>(() => initialData);
+const boardStorageKey = "pm-kanban-board-v1";
+
+const readSavedBoard = (): BoardData => {
+  if (typeof window === "undefined") {
+    return initialData;
+  }
+
+  const savedBoard = window.localStorage.getItem(boardStorageKey);
+  if (!savedBoard) {
+    return initialData;
+  }
+
+  try {
+    return JSON.parse(savedBoard) as BoardData;
+  } catch {
+    return initialData;
+  }
+};
+
+type KanbanBoardProps = {
+  onSignOut: () => void;
+};
+
+export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
+  const [board, setBoard] = useState<BoardData>(readSavedBoard);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const dragStartColumns = useRef<BoardData["columns"] | null>(null);
 
@@ -28,6 +51,10 @@ export const KanbanBoard = () => {
   );
 
   const cardsById = useMemo(() => board.cards, [board.cards]);
+
+  useEffect(() => {
+    window.localStorage.setItem(boardStorageKey, JSON.stringify(board));
+  }, [board]);
 
   const handleDragStart = (event: DragStartEvent) => {
     dragStartColumns.current = board.columns;
@@ -104,6 +131,16 @@ export const KanbanBoard = () => {
     }));
   };
 
+  const handleEditCard = (cardId: string, title: string, details: string) => {
+    setBoard((prev) => ({
+      ...prev,
+      cards: {
+        ...prev.cards,
+        [cardId]: { ...prev.cards[cardId], title, details },
+      },
+    }));
+  };
+
   const handleDeleteCard = (columnId: string, cardId: string) => {
     setBoard((prev) => {
       return {
@@ -126,7 +163,14 @@ export const KanbanBoard = () => {
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
 
   return (
-    <div className="relative overflow-hidden">
+    <div
+      className={
+        activeCardId
+          ? "kanban-drag-active relative overflow-hidden"
+          : "relative overflow-hidden"
+      }
+      data-dragging={activeCardId !== null}
+    >
       <div className="pointer-events-none absolute left-0 top-0 h-[420px] w-[420px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,_rgba(242,213,221,0.55)_0%,_rgba(242,213,221,0.12)_55%,_transparent_70%)]" />
       <div className="pointer-events-none absolute bottom-0 right-0 h-[520px] w-[520px] translate-x-1/4 translate-y-1/4 rounded-full bg-[radial-gradient(circle,_rgba(213,154,170,0.30)_0%,_rgba(213,154,170,0.08)_55%,_transparent_75%)]" />
 
@@ -145,13 +189,22 @@ export const KanbanBoard = () => {
                 and capture quick notes without getting buried in settings.
               </p>
             </div>
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--muted)]">
-                Focus
-              </p>
-              <p className="mt-2 text-lg font-semibold text-[var(--mauve)]">
-                One board. Five columns. Zero clutter.
-              </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--muted)]">
+                  Focus
+                </p>
+                <p className="mt-2 text-lg font-semibold text-[var(--mauve)]">
+                  One board. Five columns. Zero clutter.
+                </p>
+              </div>
+              <button
+                className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--mauve)] hover:text-[var(--berry)]"
+                onClick={onSignOut}
+                type="button"
+              >
+                Sign out
+              </button>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-4">
@@ -184,11 +237,17 @@ export const KanbanBoard = () => {
                 cards={column.cardIds.map((cardId) => board.cards[cardId])}
                 onRename={handleRenameColumn}
                 onAddCard={handleAddCard}
+                onEditCard={handleEditCard}
                 onDeleteCard={handleDeleteCard}
               />
             ))}
           </section>
-          <DragOverlay>
+          <DragOverlay
+            dropAnimation={{
+              duration: 300,
+              easing: "cubic-bezier(0.2, 0, 0, 1)",
+            }}
+          >
             {activeCard ? (
               <div
                 data-testid={`drag-overlay-${activeCard.id}`}
