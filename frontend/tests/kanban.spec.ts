@@ -1,9 +1,17 @@
 import { expect, test } from "@playwright/test";
 
 test("loads the kanban board", async ({ page }) => {
+  const hydrationErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().toLowerCase().includes("hydrated")) {
+      hydrationErrors.push(message.text());
+    }
+  });
+
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
   await expect(page.locator('[data-testid^="column-"]')).toHaveCount(5);
+  expect(hydrationErrors).toEqual([]);
 });
 
 test("adds a card to a column", async ({ page }) => {
