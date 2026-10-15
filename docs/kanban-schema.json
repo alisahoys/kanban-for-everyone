@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "database": "SQLite",
   "description": "Relational schema for one Kanban board per user.",
   "tables": [
@@ -20,7 +20,9 @@
           "notNull": true,
           "references": { "table": "users", "column": "id", "onDelete": "CASCADE" },
           "unique": true
-        }
+        },
+        { "name": "name", "type": "TEXT", "notNull": true, "default": "Product Planning" },
+        { "name": "description", "type": "TEXT", "notNull": true, "default": "Plan product improvements from roadmap discovery through design, review, and launch." }
       ],
       "constraints": ["One board per user"]
     },
@@ -64,6 +66,10 @@
   ],
   "mvpSeedUser": { "id": "demo-user", "username": "user" },
   "boardJsonShape": {
+    "project": {
+      "name": "Product Planning",
+      "description": "Plan product improvements from roadmap discovery through design, review, and launch."
+    },
     "columns": [{ "id": "col-backlog", "title": "Backlog", "cardIds": ["card-1"] }],
     "cards": {
       "card-1": { "id": "card-1", "title": "Example task", "details": "Task details" }

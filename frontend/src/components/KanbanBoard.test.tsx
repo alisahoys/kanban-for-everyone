@@ -22,6 +22,22 @@ describe("KanbanBoard", () => {
     expect(await screen.findAllByTestId(/column-/i)).toHaveLength(5);
   });
 
+  it("saves project details through the board API", async () => {
+    renderBoard();
+    await screen.findByRole("heading", { name: "Product Planning" });
+    await userEvent.click(screen.getByRole("button", { name: "Edit project details" }));
+    await userEvent.clear(screen.getByLabelText("Project name"));
+    await userEvent.type(screen.getByLabelText("Project name"), "Customer insights");
+    await userEvent.clear(screen.getByLabelText("Project description"));
+    await userEvent.type(
+      screen.getByLabelText("Project description"),
+      "Turn customer feedback into product improvements."
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Save project details" }));
+
+    expect(await screen.findByRole("heading", { name: "Customer insights" })).toBeInTheDocument();
+  });
+
   it("renames a column", async () => {
     renderBoard();
     await screen.findByTestId("column-col-backlog");

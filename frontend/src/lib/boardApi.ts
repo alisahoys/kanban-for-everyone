@@ -14,25 +14,31 @@ const boardUrl = () => {
 
 export const boardSnapshot = (board: BoardData) =>
   JSON.stringify({
+    project: board.project,
     columns: board.columns,
     cards: Object.fromEntries(
       Object.entries(board.cards).sort(([left], [right]) => left.localeCompare(right))
     ),
   });
 
-const isBoardData = (value: unknown): value is BoardData => {
+const parseBoardData = (value: unknown): BoardData | null => {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
+    return null;
   }
 
   const candidate = value as Partial<BoardData>;
   if (
+    (candidate.project !== undefined &&
+      (typeof candidate.project !== "object" ||
+        candidate.project === null ||
+        typeof candidate.project.name !== "string" ||
+        typeof candidate.project.description !== "string")) ||
     !Array.isArray(candidate.columns) ||
     typeof candidate.cards !== "object" ||
     candidate.cards === null ||
     Array.isArray(candidate.cards)
   ) {
-    return false;
+    return null;
   }
 
   if (
@@ -46,12 +52,12 @@ const isBoardData = (value: unknown): value is BoardData => {
         column.cardIds.some((cardId) => typeof cardId !== "string")
     )
   ) {
-    return false;
+    return null;
   }
 
   const cards = candidate.cards as Record<string, unknown>;
   const referencedIds = candidate.columns.flatMap((column) => column.cardIds);
-  return (
+  const validCards =
     referencedIds.length === new Set(referencedIds).size &&
     referencedIds.length === Object.keys(cards).length &&
     referencedIds.every((id) => {
@@ -64,8 +70,16 @@ const isBoardData = (value: unknown): value is BoardData => {
         typeof (card as BoardData["cards"][string]).title === "string" &&
         typeof (card as BoardData["cards"][string]).details === "string"
       );
-    })
-  );
+    });
+  if (!validCards) {
+    return null;
+  }
+
+  return {
+    project: candidate.project ?? initialData.project,
+    columns: candidate.columns,
+    cards: candidate.cards,
+  };
 };
 
 const readLegacyBoard = (): BoardData | null => {
@@ -76,7 +90,7 @@ const readLegacyBoard = (): BoardData | null => {
 
   try {
     const parsed: unknown = JSON.parse(saved);
-    return isBoardData(parsed) ? parsed : null;
+    return parseBoardData(parsed);
   } catch {
     return null;
   }

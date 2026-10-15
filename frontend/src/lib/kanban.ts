@@ -11,11 +11,20 @@ export type Column = {
 };
 
 export type BoardData = {
+  project: {
+    name: string;
+    description: string;
+  };
   columns: Column[];
   cards: Record<string, Card>;
 };
 
 export const initialData: BoardData = {
+  project: {
+    name: "Product Planning",
+    description:
+      "Plan product improvements from roadmap discovery through design, review, and launch.",
+  },
   columns: [
     { id: "col-backlog", title: "Backlog", cardIds: ["card-1", "card-2"] },
     { id: "col-discovery", title: "Discovery", cardIds: ["card-3"] },

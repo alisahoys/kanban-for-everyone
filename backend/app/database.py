@@ -94,7 +94,9 @@ def initialize_database(database_path: Path = DATABASE_PATH) -> None:
             );
             CREATE TABLE IF NOT EXISTS boards (
                 id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE
+                user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                name TEXT NOT NULL DEFAULT 'Product Planning',
+                description TEXT NOT NULL DEFAULT 'Plan product improvements from roadmap discovery through design, review, and launch.'
             );
             CREATE TABLE IF NOT EXISTS columns (
                 board_id TEXT NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
@@ -118,6 +120,19 @@ def initialize_database(database_path: Path = DATABASE_PATH) -> None:
             );
             """
         )
+
+        board_columns = {
+            row["name"] for row in connection.execute("PRAGMA table_info(boards)")
+        }
+        if "name" not in board_columns:
+            connection.execute(
+                "ALTER TABLE boards ADD COLUMN name TEXT NOT NULL DEFAULT 'Product Planning'"
+            )
+        if "description" not in board_columns:
+            connection.execute(
+                "ALTER TABLE boards ADD COLUMN description TEXT NOT NULL DEFAULT "
+                "'Plan product improvements from roadmap discovery through design, review, and launch.'"
+            )
 
         connection.execute(
             "INSERT OR IGNORE INTO users (id, username) VALUES (?, ?)",
@@ -159,7 +174,7 @@ def initialize_database(database_path: Path = DATABASE_PATH) -> None:
 def load_board(database_path: Path, user_id: str) -> dict | None:
     with connect(database_path) as connection:
         board = connection.execute(
-            "SELECT id FROM boards WHERE user_id = ?", (user_id,)
+            "SELECT id, name, description FROM boards WHERE user_id = ?", (user_id,)
         ).fetchone()
         if not board:
             return None
@@ -188,6 +203,10 @@ def load_board(database_path: Path, user_id: str) -> dict | None:
         cards_by_column[card["column_id"]].append(card["id"])
 
     return {
+        "project": {
+            "name": board["name"],
+            "description": board["description"],
+        },
         "columns": [
             {
                 "id": column["id"],
@@ -209,6 +228,10 @@ def save_board(database_path: Path, user_id: str, board_data: BoardData) -> bool
             return False
 
         board_id = board["id"]
+        connection.execute(
+            "UPDATE boards SET name = ?, description = ? WHERE id = ?",
+            (board_data.project.name, board_data.project.description, board_id),
+        )
         connection.execute("DELETE FROM cards WHERE board_id = ?", (board_id,))
         for column_position, column in enumerate(board_data.columns):
             connection.execute(

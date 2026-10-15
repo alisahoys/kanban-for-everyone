@@ -15,6 +15,7 @@ import {
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
 import { ChatSidebar } from "@/components/ChatSidebar";
+import { ProjectDetailsEditor } from "@/components/ProjectDetailsEditor";
 import { createId, moveCard, type BoardData } from "@/lib/kanban";
 import { useBoardSync } from "@/hooks/useBoardSync";
 
@@ -203,16 +204,12 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
         <header className="flex flex-col gap-6 rounded-[32px] border border-[var(--border)] bg-white/80 p-8 shadow-[var(--shadow)] backdrop-blur">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--muted)]">
-                Single Board Kanban
-              </p>
-              <h1 className="mt-3 font-display text-4xl font-semibold text-[var(--ink)]">
-                Kanban Studio
-              </h1>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--muted)]">
-                Keep momentum visible. Rename columns, drag cards between stages,
-                and capture quick notes without getting buried in settings.
-              </p>
+              <ProjectDetailsEditor
+                project={board.project}
+                onSave={(project) =>
+                  sync.updateBoard((prev) => ({ ...prev, project }))
+                }
+              />
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4">

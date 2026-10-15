@@ -13,7 +13,7 @@ async function signIn(page: Page) {
   await page.getByLabel("Username").fill("user");
   await page.getByLabel("Password").fill("password");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Product Planning" })).toBeVisible();
 }
 
 async function openAssistant(page: Page) {
@@ -80,9 +80,30 @@ test("loads the kanban board", async ({ page }) => {
   });
 
   await signIn(page);
-  await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Product Planning" })).toBeVisible();
   await expect(page.locator('[data-testid^="column-"]')).toHaveCount(5);
   expect(hydrationErrors).toEqual([]);
+});
+
+test("edits and persists project details", async ({ page }) => {
+  await signIn(page);
+  await page.getByRole("button", { name: "Edit project details" }).click();
+  await page.getByLabel("Project name").fill("Customer insights");
+  await page
+    .getByLabel("Project description")
+    .fill("Turn customer feedback into product improvements.");
+  await page.getByRole("button", { name: "Save project details" }).click();
+
+  await expect(page.getByRole("heading", { name: "Customer insights" })).toBeVisible();
+  await expectBoardStored(page, (board) =>
+    board.project.name === "Customer insights" &&
+      board.project.description === "Turn customer feedback into product improvements."
+  );
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Customer insights" })).toBeVisible();
+  await expect(
+    page.getByText("Turn customer feedback into product improvements.")
+  ).toBeVisible();
 });
 
 test("shows an AI reply without changing the board", async ({ page }) => {

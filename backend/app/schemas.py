@@ -21,9 +21,17 @@ class ColumnData(BaseModel):
     cardIds: list[str]
 
 
+class ProjectData(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1, max_length=120)
+    description: str = Field(max_length=2000)
+
+
 class BoardData(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    project: ProjectData
     columns: list[ColumnData]
     cards: dict[str, CardData]
 

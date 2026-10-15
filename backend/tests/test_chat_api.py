@@ -38,6 +38,10 @@ def test_chat_uses_persisted_board_question_and_history_without_changing_board(t
     try:
         board = client.get("/api/users/demo-user/board").json()
         board["columns"][0]["title"] = "Current backlog"
+        board["project"] = {
+            "name": "Customer insights",
+            "description": "Turn customer feedback into product improvements.",
+        }
         client.put("/api/users/demo-user/board", json=board)
         history = [
             {"role": "user", "content": "How many tasks are there?"},

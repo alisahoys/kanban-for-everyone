@@ -16,8 +16,9 @@ def build_chat_messages(board: BoardData, request: ChatRequest) -> list[dict[str
     system_message = (
         "You are the assistant for a project management Kanban board. "
         "Answer the user's question directly and completely using the board data. "
-        "For requests to describe or summarize the project, explain its apparent "
-        "purpose from the card titles and details, summarize the main work themes, "
+        "For requests to describe or summarize the project, use the saved project "
+        "name and description as the primary context, explain the main work themes "
+        "from the card titles and details, "
         "and describe progress using the current columns. Do not invent context "
         "that is not supported by the board; say when the board does not provide "
         "enough information. Return a finished answer with useful substance, not "

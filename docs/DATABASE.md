@@ -8,7 +8,7 @@ The `boards.user_id` unique constraint enforces one board per user. Column and c
 
 ## MVP identity and initialization
 
-Seed one user with ID `demo-user` and username `user`; do not store the hardcoded demo password in the database. Create that user's board and seed its five columns and sample cards when the database is first initialized. Keep the current frontend board JSON shape (`columns` with `cardIds`, plus a `cards` map) as the API representation; the backend maps that shape to and from the normalized rows.
+Seed one user with ID `demo-user` and username `user`; do not store the hardcoded demo password in the database. Create that user's board and seed its project name and description, five columns, and sample cards when the database is first initialized. The board API representation includes `project` details, `columns` with `cardIds`, and a `cards` map; the backend maps that shape to and from the normalized rows. Existing databases receive project name and description columns with defaults during initialization, preserving existing columns and cards.
 
 The sign-in implemented so far is client-side demo UI only. The MVP API uses `/api/users/{user_id}/board` and the seeded `demo-user` ID; this identifier is not authentication. Do not treat the current frontend sign-in as authorization. Future authentication should derive the user ID from the authenticated server-side identity.
 
@@ -20,4 +20,4 @@ In Docker, store the database at `/data/kanban.sqlite3` on a named Compose volum
 
 ## Not included
 
-This proposal does not add authentication, board history, soft deletes, schema migration tooling, or multiple boards per user. Those are outside the MVP needs described in `AGENTS.md`.
+This proposal does not add authentication, board history, soft deletes, general-purpose schema migration tooling, or multiple boards per user. Existing databases receive only the small in-app migration needed for the project detail fields.

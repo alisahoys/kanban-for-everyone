@@ -147,3 +147,54 @@ Tests and success criteria:
 - Chat works at desktop and narrow viewport sizes without blocking board interactions outside the sidebar.
 - A text-only reply leaves the board unchanged; a validated board update appears immediately and persists through the existing board API.
 - Automated tests remain runnable without an OpenRouter key or live network access.
+
+Part 11: Project details - COMPLETE
+
+Add editable project name and description fields so the board has reliable context and the AI can describe the project without inferring its purpose from task cards alone.
+
+- [x] Extend the board data model and SQLite persistence with a project name and description; preserve existing local databases and seed sensible values for new databases.
+- [x] Extend the board API and frontend to load, edit, validate, and save the project details.
+- [x] Include the saved project details in the AI context and use them when answering project description and summary questions.
+- [x] Cover database initialization and existing-database migration, API validation and persistence, frontend editing, and AI context with automated tests.
+- [x] Verify project details survive reload and backend container recreation.
+
+Verification:
+- Passed: backend test suite (35 tests, including existing-database migration, project API validation and persistence, and project details in the AI context).
+- Passed: frontend unit suite (26 tests, 83.12% statement coverage), lint, production build, and 12 Playwright tests; the browser tests cover editing and reloading saved project details.
+- Passed: Docker Compose rebuild and backend container recreation; project metadata and all 8 existing cards persisted. The temporary persistence-check metadata was restored to the original board values.
+
+Tests and success criteria:
+- Existing boards and cards remain intact when an existing database is upgraded.
+- Project name and description can be edited in the UI and persist through reload.
+- The AI receives the persisted project details and uses them in project descriptions without inventing unsupported facts.
+
+Part 12: Card priority and due dates - NOT STARTED
+
+Add optional priority and due date fields to cards to make planning and upcoming work visible. Assignees are outside this part's scope.
+
+- [ ] Extend card data validation, SQLite persistence, and board API support for optional priority and due date fields; preserve existing cards during database upgrades.
+- [ ] Add controls for setting and editing a card's priority and due date.
+- [ ] Display priority and due date clearly on cards, including overdue dates, while keeping columns readable on narrow screens.
+- [ ] Keep card creation, editing, drag-and-drop, AI board updates, and legacy seeded cards compatible with the new optional fields.
+- [ ] Cover field validation, persistence and migration, card UI behavior, and API-backed browser interactions with automated tests.
+
+Tests and success criteria:
+- Priority uses a small defined set of values, and a due date is either absent or a valid calendar date.
+- Existing cards remain valid and unchanged after database upgrade; new and edited values persist through reload.
+- The card layout remains usable on desktop and narrow screens.
+
+Part 13: Preview and undo AI board changes - NOT STARTED
+
+Let users review an AI-proposed board update before saving it, then offer a direct way to undo an applied update.
+
+- [ ] Change the chat update flow so the AI can return a validated proposed board without saving it immediately.
+- [ ] Show a concise summary of the proposed card additions, edits, and moves, with Apply and Discard actions.
+- [ ] Save an accepted proposal through the existing board API and update the visible board only after the save succeeds.
+- [ ] Keep the prior board snapshot after an AI update and offer an Undo action that restores it through the board API; clear the undo option when another board change makes that snapshot stale.
+- [ ] Cover proposals with and without changes, Apply, Discard, save failures, Undo, and stale undo state with automated frontend, backend, and browser tests.
+
+Tests and success criteria:
+- An AI-proposed update never changes persisted or visible board data until the user applies it.
+- Discard leaves the board unchanged; Apply saves and displays the proposal.
+- Undo restores the exact board state that existed before the accepted AI update and persists the restoration.
+- Chat remains usable at desktop and narrow viewport sizes, and automated tests do not require a live AI provider.

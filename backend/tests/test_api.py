@@ -69,6 +69,10 @@ def test_get_board_seeds_demo_user_and_returns_ordered_board(client: TestClient)
 
     assert response.status_code == 200
     board = response.json()
+    assert board["project"] == {
+        "name": "Product Planning",
+        "description": "Plan product improvements from roadmap discovery through design, review, and launch.",
+    }
     assert [column["id"] for column in board["columns"]] == [
         "col-backlog",
         "col-discovery",
@@ -86,6 +90,10 @@ def test_get_board_seeds_demo_user_and_returns_ordered_board(client: TestClient)
 
 def test_put_board_persists_edits_moves_and_deletes(client: TestClient) -> None:
     board = client.get("/api/users/demo-user/board").json()
+    board["project"] = {
+        "name": "Customer insights",
+        "description": "Turn customer feedback into product improvements.",
+    }
     board["columns"][0]["title"] = "Icebox"
     board["columns"][0]["cardIds"].remove("card-2")
     board["columns"][1]["cardIds"].append("card-2")
@@ -118,6 +126,7 @@ def test_board_routes_return_not_found_for_unknown_user(client: TestClient) -> N
         lambda board: board["columns"][1]["cardIds"].append("card-1"),
         lambda board: board["cards"].pop("card-1"),
         lambda board: board["cards"]["card-1"].update({"id": "different-id"}),
+        lambda board: board["project"].update({"name": ""}),
     ],
 )
 def test_put_board_rejects_invalid_board_structure(
