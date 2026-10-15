@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -9,6 +9,7 @@ import {
   useSensors,
   closestCorners,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
@@ -18,6 +19,7 @@ import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
 export const KanbanBoard = () => {
   const [board, setBoard] = useState<BoardData>(() => initialData);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const dragStartColumns = useRef<BoardData["columns"] | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -28,21 +30,53 @@ export const KanbanBoard = () => {
   const cardsById = useMemo(() => board.cards, [board.cards]);
 
   const handleDragStart = (event: DragStartEvent) => {
+    dragStartColumns.current = board.columns;
     setActiveCardId(event.active.id as string);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
-    setActiveCardId(null);
-
     if (!over || active.id === over.id) {
       return;
     }
 
-    setBoard((prev) => ({
-      ...prev,
-      columns: moveCard(prev.columns, active.id as string, over.id as string),
-    }));
+    setBoard((prev) => {
+      const activeId = String(active.id);
+      const overId = String(over.id);
+      const overColumn = prev.columns.find(
+        (column) =>
+          column.id === overId || column.cardIds.includes(overId)
+      );
+
+      if (!overColumn) {
+        return prev;
+      }
+
+      const columns = moveCard(prev.columns, activeId, overId);
+      return columns === prev.columns ? prev : { ...prev, columns };
+    });
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveCardId(null);
+
+    if (!event.over) {
+      const originalColumns = dragStartColumns.current;
+      if (originalColumns) {
+        setBoard((prev) => ({ ...prev, columns: originalColumns }));
+      }
+    }
+
+    dragStartColumns.current = null;
+  };
+
+  const handleDragCancel = () => {
+    const originalColumns = dragStartColumns.current;
+    if (originalColumns) {
+      setBoard((prev) => ({ ...prev, columns: originalColumns }));
+    }
+    dragStartColumns.current = null;
+    setActiveCardId(null);
   };
 
   const handleRenameColumn = (columnId: string, title: string) => {
@@ -138,7 +172,9 @@ export const KanbanBoard = () => {
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
           <section className="grid gap-6 lg:grid-cols-5">
             {board.columns.map((column) => (
@@ -155,8 +191,6 @@ export const KanbanBoard = () => {
           <DragOverlay>
             {activeCard ? (
               <div
-                key={activeCard.id}
-                id={`drag-overlay-${activeCard.id}`}
                 data-testid={`drag-overlay-${activeCard.id}`}
                 className="w-[260px]"
               >

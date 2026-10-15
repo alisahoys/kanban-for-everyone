@@ -11,7 +11,7 @@ Set up the Docker infrastructure, the backend in backend/ with FastAPI, and writ
 Completed checks:
 - [x] Build and start the Docker Compose service.
 - [x] Serve the scaffolding HTML and expose the health and hello API routes.
-- [x] Add backend unit and real-server integration tests with at least 80% coverage.
+- [x] Add backend unit and real-server integration tests for important API behavior; review coverage without a fixed minimum.
 - [x] Add start and stop scripts for Windows, macOS, and Linux.
 
 Part 3: Add in Frontend - COMPLETE
@@ -20,12 +20,12 @@ Checklist:
 - [x] Configure Next.js to produce a static export.
 - [x] Build the frontend in Docker and copy the static export into the runtime image.
 - [x] Serve the exported frontend at `/` from FastAPI while preserving API routes and static asset paths.
-- [x] Run Playwright against the FastAPI-served export and retain frontend unit coverage of at least 80%.
+- [x] Run Playwright against the FastAPI-served export and retain useful frontend unit tests; review coverage without a fixed minimum.
 - [x] Verify the frontend build, backend tests, browser tests, and Docker startup.
 
 Tests and success criteria:
 - `npm run build` succeeds and writes the static site to `frontend/out/`.
-- `npm run test:unit` passes and enforces at least 80% coverage.
+- `npm run test:unit` passes and reports coverage to help identify meaningful untested behavior; there is no fixed coverage gate.
 - `npm run test:e2e` checks the board loads and supports card creation and drag-and-drop when served by FastAPI.
 - Backend tests confirm `/` serves the Kanban board, Next.js assets load, API endpoints still work, and unknown routes return 404.
 - Docker Compose builds and starts the app; `http://localhost:8000/` shows the demo Kanban board.

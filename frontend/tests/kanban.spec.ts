@@ -27,6 +27,7 @@ test("adds a card to a column", async ({ page }) => {
 test("moves a card between columns", async ({ page }) => {
   await page.goto("/");
   const card = page.getByTestId("card-card-1");
+  const sourceColumn = page.getByTestId("column-col-backlog");
   const targetColumn = page.getByTestId("column-col-review");
   const cardBox = await card.boundingBox();
   const columnBox = await targetColumn.boundingBox();
@@ -44,8 +45,24 @@ test("moves a card between columns", async ({ page }) => {
     columnBox.y + 120,
     { steps: 12 }
   );
+  await expect(targetColumn.getByTestId("card-card-1")).toBeVisible();
+  await expect(sourceColumn.getByTestId("card-card-1")).toHaveCount(0);
   await page.mouse.up();
   await expect(targetColumn.getByTestId("card-card-1")).toBeVisible();
-  await expect(page.getByTestId("drag-overlay-card-1")).toBeVisible();
-  await expect(page.getByTestId("drag-overlay-card-1")).toBeHidden();
+  const dragOverlay = page.getByTestId("drag-overlay-card-1");
+  await expect(dragOverlay).toBeVisible();
+  await expect
+    .poll(() =>
+      dragOverlay.evaluate((element) => element.parentElement?.getAnimations().length ?? 0)
+    )
+    .toBeGreaterThan(0);
+  await expect
+    .poll(() =>
+      targetColumn
+        .getByTestId("card-card-1")
+        .evaluate((element) => getComputedStyle(element).opacity)
+    )
+    .toBe("0");
+  await expect(dragOverlay).toBeHidden();
+  await expect(targetColumn.getByTestId("card-card-1")).toHaveCSS("opacity", "1");
 });
