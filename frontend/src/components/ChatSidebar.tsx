@@ -7,11 +7,13 @@ import type { BoardData } from "@/lib/kanban";
 type ChatSidebarProps = {
   beforeSend: () => Promise<void>;
   onBoardUpdate: (board: BoardData) => void;
+  onSendingChange?: (sending: boolean) => void;
 };
 
 export const ChatSidebar = ({
   beforeSend,
   onBoardUpdate,
+  onSendingChange,
 }: ChatSidebarProps) => {
   const [expanded, setExpanded] = useState(false);
   const [turns, setTurns] = useState<ChatTurn[]>([]);
@@ -28,6 +30,7 @@ export const ChatSidebar = ({
     }
 
     setSending(true);
+    onSendingChange?.(true);
     setError("");
     setPendingQuestion(question);
 
@@ -52,6 +55,7 @@ export const ChatSidebar = ({
     } finally {
       setPendingQuestion("");
       setSending(false);
+      onSendingChange?.(false);
     }
   };
 

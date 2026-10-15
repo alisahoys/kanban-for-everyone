@@ -125,6 +125,7 @@ export const KanbanCard = ({ card, onEdit, onDelete }: KanbanCardProps) => {
             <input
               autoFocus={editingField === "title"}
               required
+              maxLength={200}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               className="mt-1 w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--mauve)]"
@@ -163,6 +164,7 @@ export const KanbanCard = ({ card, onEdit, onDelete }: KanbanCardProps) => {
             Details
             <textarea
               autoFocus={editingField === "details"}
+              maxLength={2000}
               value={details}
               onChange={(event) => setDetails(event.target.value)}
               rows={3}

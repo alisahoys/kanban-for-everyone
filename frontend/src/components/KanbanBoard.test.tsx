@@ -1,9 +1,9 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, vi } from "vitest";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { createMockBoardApi } from "@/test/mockBoardApi";
-import { initialData } from "@/lib/kanban";
+import { initialData, type BoardData } from "@/lib/kanban";
 
 const getFirstColumn = () => screen.getAllByTestId(/column-/i)[0];
 const renderBoard = () => render(<KanbanBoard onSignOut={() => {}} />);
@@ -47,6 +47,75 @@ describe("KanbanBoard", () => {
     await userEvent.clear(input);
     await userEvent.type(input, "New Name");
     expect(input).toHaveValue("New Name");
+  });
+
+  it("never saves an empty column title and restores it on blur", async () => {
+    const api = createMockBoardApi();
+    const fetchMock = vi.fn(api.fetchBoard);
+    vi.stubGlobal("fetch", fetchMock);
+    renderBoard();
+    const input = within(await screen.findByTestId("column-col-backlog")).getByLabelText(
+      "Column title"
+    );
+
+    await userEvent.clear(input);
+    expect(input).toHaveValue("");
+    await userEvent.tab();
+
+    expect(input).toHaveValue("Backlog");
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const savedTitles = fetchMock.mock.calls
+      .filter(([, init]) => init?.method === "PUT")
+      .map(([, init]) => (JSON.parse(String(init?.body)) as BoardData).columns[0].title);
+    expect(savedTitles).not.toContain("");
+    expect(api.getSavedBoard().columns[0].title).toBe("Backlog");
+  });
+
+  it("locks the board while chat is pending and can undo an AI change", async () => {
+    const api = createMockBoardApi();
+    const aiBoard = structuredClone(initialData);
+    aiBoard.cards["card-1"].title = "Changed by AI";
+    let resolveChat: (response: Response) => void = () => {};
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      String(input).endsWith("/chat")
+        ? new Promise<Response>((resolve) => {
+            resolveChat = resolve;
+          })
+        : api.fetchBoard(input, init)
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    renderBoard();
+    await screen.findByTestId("column-col-backlog");
+
+    await userEvent.type(screen.getByLabelText("Ask the assistant"), "Rename card one.");
+    await userEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    expect(await screen.findByText("Board is locked while the assistant works.")).toBeInTheDocument();
+    expect(screen.getByTestId("board-columns")).toHaveAttribute("inert");
+
+    const putsBeforeReply = fetchMock.mock.calls.filter(([, i]) => i?.method === "PUT").length;
+    await act(async () => {
+      resolveChat({
+        ok: true,
+        status: 200,
+        json: async () => ({ message: "Renamed.", board: aiBoard }),
+      } as Response);
+    });
+
+    expect(await screen.findByText("Changed by AI")).toBeInTheDocument();
+    expect(screen.getByTestId("board-columns")).not.toHaveAttribute("inert");
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    // The server already saved the AI board, so the client must not save it again.
+    expect(fetchMock.mock.calls.filter(([, i]) => i?.method === "PUT")).toHaveLength(
+      putsBeforeReply
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Undo AI change" }));
+    expect(await screen.findByText("Align roadmap themes")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Undo AI change" })).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(api.getSavedBoard().cards["card-1"].title).toBe("Align roadmap themes")
+    );
   });
 
   it("adds and removes a card", async () => {

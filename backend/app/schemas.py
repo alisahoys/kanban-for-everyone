@@ -5,13 +5,18 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.constants import FIXED_COLUMN_IDS
 
+COLUMN_TITLE_MAX = 60
+CARD_TITLE_MAX = 200
+CARD_DETAILS_MAX = 2000
+MAX_CARDS = 500
+
 
 class CardData(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    id: str = Field(min_length=1)
-    title: str = Field(min_length=1)
-    details: str
+    id: str = Field(min_length=1, max_length=100)
+    title: str = Field(min_length=1, max_length=CARD_TITLE_MAX)
+    details: str = Field(max_length=CARD_DETAILS_MAX)
     priority: Literal["low", "medium", "high"] | None
     dueDate: date | None
 
@@ -20,7 +25,7 @@ class ColumnData(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str = Field(min_length=1)
-    title: str = Field(min_length=1)
+    title: str = Field(min_length=1, max_length=COLUMN_TITLE_MAX)
     cardIds: list[str]
 
 
@@ -36,7 +41,7 @@ class BoardData(BaseModel):
 
     project: ProjectData
     columns: list[ColumnData]
-    cards: dict[str, CardData]
+    cards: dict[str, CardData] = Field(max_length=MAX_CARDS)
 
     @model_validator(mode="after")
     def validate_board(self):

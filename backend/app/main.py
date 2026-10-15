@@ -1,26 +1,24 @@
 from contextlib import asynccontextmanager
-import json
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import ValidationError
 
-from app.chat import STRUCTURED_REPLY_FORMAT, build_chat_messages
-from app.database import (
-    DATABASE_PATH,
-    DEMO_USER_ID,
-    initialize_database,
-    load_board,
-    save_board,
+from app.chat import (
+    STRUCTURED_REPLY_FORMAT,
+    InvalidReplyError,
+    build_chat_messages,
+    parse_reply,
 )
+from app.database import DATABASE_PATH, initialize_database, load_board, save_board
 from app.openrouter import (
     OpenRouterClient,
     OpenRouterConfigurationError,
     OpenRouterError,
 )
-from app.schemas import BoardData, ChatRequest, ChatResponse, StructuredChatReply
+from app.schemas import BoardData, ChatRequest, ChatResponse
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR.parents[1] / "frontend" / "out"
@@ -77,73 +75,30 @@ def create_app(
     async def chat_with_board(
         user_id: str, chat_request: ChatRequest, request: Request
     ) -> ChatResponse:
-        if user_id != DEMO_USER_ID:
+        database_path = request.app.state.database_path
+        board_data = await run_in_threadpool(load_board, database_path, user_id)
+        if board_data is None:
             raise HTTPException(status_code=404, detail="Board not found")
-
-        current_board_data = load_board(request.app.state.database_path, user_id)
-        if current_board_data is None:
-            raise HTTPException(status_code=404, detail="Board not found")
-        current_board = BoardData.model_validate(current_board_data)
-        messages = build_chat_messages(current_board, chat_request)
+        current_board = BoardData.model_validate(board_data)
 
         try:
             raw_reply = await request.app.state.openrouter_client.complete_messages(
-                messages, response_format=STRUCTURED_REPLY_FORMAT
+                build_chat_messages(current_board, chat_request),
+                response_format=STRUCTURED_REPLY_FORMAT,
             )
+            reply = parse_reply(raw_reply, current_board)
         except OpenRouterConfigurationError as error:
             raise HTTPException(status_code=503, detail=str(error)) from error
-        except OpenRouterError as error:
+        except (OpenRouterError, InvalidReplyError) as error:
             raise HTTPException(status_code=502, detail=str(error)) from error
 
-        try:
-            decoded_reply = json.loads(raw_reply)
-        except json.JSONDecodeError as error:
-            raise HTTPException(
-                status_code=502,
-                detail="AI provider returned malformed structured output",
-            ) from error
-
-        if isinstance(decoded_reply, dict):
-            board_update = decoded_reply.get("board_update")
-            if isinstance(board_update, dict):
-                board_update.setdefault(
-                    "project", current_board.project.model_dump(mode="json")
-                )
-                update_cards = board_update.get("cards")
-                if isinstance(update_cards, dict):
-                    for card_id, card_update in update_cards.items():
-                        if not isinstance(card_update, dict):
-                            continue
-                        current_card = current_board.cards.get(card_id)
-                        card_update.setdefault(
-                            "priority", current_card.priority if current_card else None
-                        )
-                        card_update.setdefault(
-                            "dueDate",
-                            current_card.dueDate.isoformat()
-                            if current_card and current_card.dueDate
-                            else None,
-                        )
-
-        try:
-            model_reply = StructuredChatReply.model_validate(decoded_reply)
-        except ValidationError as error:
-            raise HTTPException(
-                status_code=502,
-                detail="AI provider returned an invalid response or board update",
-            ) from error
-
-        resulting_board = None
-        if model_reply.board_update is not None:
-            if not save_board(
-                request.app.state.database_path, user_id, model_reply.board_update
-            ):
-                raise HTTPException(status_code=404, detail="Board not found")
-            resulting_board = model_reply.board_update
-
-        if resulting_board is None:
-            return ChatResponse(message=model_reply.message)
-        return ChatResponse(message=model_reply.message, board=resulting_board)
+        if reply.board_update is None:
+            return ChatResponse(message=reply.message)
+        if not await run_in_threadpool(
+            save_board, database_path, user_id, reply.board_update
+        ):
+            raise HTTPException(status_code=404, detail="Board not found")
+        return ChatResponse(message=reply.message, board=reply.board_update)
 
     application.mount(
         "/",

@@ -138,6 +138,8 @@ test("applies and persists a board update returned by AI chat", async ({ page })
   const updatedBoard = structuredClone(initialData);
   updatedBoard.cards["card-1"].title = "Updated by the assistant";
   await page.route("**/api/users/demo-user/chat", async (route) => {
+    // Like the real chat API, save the update before replying.
+    await page.request.put("/api/users/demo-user/board", { data: updatedBoard });
     await route.fulfill({
       status: 200,
       contentType: "application/json",

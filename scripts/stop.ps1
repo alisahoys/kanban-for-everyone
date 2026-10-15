@@ -12,7 +12,8 @@ if (-not (Test-Path $pidFile)) {
 
 $backendPid = Get-Content $pidFile
 if ($backendPid -and (Get-Process -Id $backendPid -ErrorAction SilentlyContinue)) {
-    Stop-Process -Id $backendPid -Force
+    # uv runs uvicorn as a child process, so stop the whole tree.
+    taskkill /PID $backendPid /T /F | Out-Null
     Write-Host "Stopped backend with PID $backendPid"
 } else {
     Write-Host "Backend with PID $backendPid is not running."

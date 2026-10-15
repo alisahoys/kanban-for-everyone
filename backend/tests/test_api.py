@@ -133,6 +133,25 @@ def test_board_routes_return_not_found_for_unknown_user(client: TestClient) -> N
         lambda board: board["project"].update({"name": ""}),
         lambda board: board["cards"]["card-1"].update({"priority": "urgent"}),
         lambda board: board["cards"]["card-1"].update({"dueDate": "2027-02-30"}),
+        lambda board: board["columns"][0].update({"title": ""}),
+        lambda board: board["columns"][0].update({"title": "x" * 61}),
+        lambda board: board["cards"]["card-1"].update({"title": "x" * 201}),
+        lambda board: board["cards"]["card-1"].update({"details": "x" * 2001}),
+        lambda board: (
+            board["cards"].update(
+                {
+                    f"extra-{i}": {
+                        "id": f"extra-{i}",
+                        "title": "Extra",
+                        "details": "",
+                        "priority": None,
+                        "dueDate": None,
+                    }
+                    for i in range(493)
+                }
+            ),
+            board["columns"][0]["cardIds"].extend(f"extra-{i}" for i in range(493)),
+        ),
     ],
 )
 def test_put_board_rejects_invalid_board_structure(

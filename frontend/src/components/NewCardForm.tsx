@@ -41,6 +41,7 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
       {isOpen ? (
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
+            maxLength={200}
             value={formState.title}
             onChange={(event) =>
               setFormState((prev) => ({ ...prev, title: event.target.value }))
@@ -50,6 +51,7 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
             required
           />
           <textarea
+            maxLength={2000}
             value={formState.details}
             onChange={(event) =>
               setFormState((prev) => ({ ...prev, details: event.target.value }))

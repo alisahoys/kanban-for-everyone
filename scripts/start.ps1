@@ -15,7 +15,7 @@ if (Test-Path $pidFile) {
 }
 
 Push-Location $backendDir
-$process = Start-Process -FilePath 'uv' -ArgumentList 'run', 'uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000' -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog -PassThru
+$process = Start-Process -FilePath 'uv' -ArgumentList 'run', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', '8000' -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog -PassThru
 $process.Id | Set-Content $pidFile
 Pop-Location
 

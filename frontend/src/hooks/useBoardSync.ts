@@ -99,6 +99,13 @@ export const useBoardSync = () => {
     []
   );
 
+  // Apply a board the server has already saved, without saving it again.
+  const replaceFromServer = useCallback((serverBoard: BoardData) => {
+    latestBoard.current = serverBoard;
+    lastSavedSnapshot.current = boardSnapshot(serverBoard);
+    setBoard(serverBoard);
+  }, []);
+
   const saveNow = useCallback(async () => {
     const currentBoard = latestBoard.current;
     if (!currentBoard) {
@@ -122,6 +129,7 @@ export const useBoardSync = () => {
     loadError,
     saveStatus,
     updateBoard,
+    replaceFromServer,
     saveNow,
     retryLoad: () => {
       setLoadError("");

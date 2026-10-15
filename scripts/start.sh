@@ -12,7 +12,7 @@ if [ -f "${PID_FILE}" ] && kill -0 "$(cat "${PID_FILE}")" 2>/dev/null; then
 fi
 
 cd "${ROOT_DIR}/backend"
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 > "${STDOUT_LOG}" 2> "${STDERR_LOG}" &
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 > "${STDOUT_LOG}" 2> "${STDERR_LOG}" &
 PID=$!
 
 echo "${PID}" > "${PID_FILE}"

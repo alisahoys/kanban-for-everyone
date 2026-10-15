@@ -1,3 +1,4 @@
+import { useState } from "react";
 import clsx from "clsx";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -35,6 +36,8 @@ export const KanbanColumn = ({
   onDeleteCard,
 }: KanbanColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
+  // Holds an empty title while the user retypes it; the server rejects empty titles.
+  const [emptyDraft, setEmptyDraft] = useState<string | null>(null);
 
   return (
     <section
@@ -54,8 +57,18 @@ export const KanbanColumn = ({
             </span>
           </div>
           <input
-            value={column.title}
-            onChange={(event) => onRename(column.id, event.target.value)}
+            value={emptyDraft ?? column.title}
+            maxLength={60}
+            onChange={(event) => {
+              const title = event.target.value;
+              if (title.trim()) {
+                setEmptyDraft(null);
+                onRename(column.id, title);
+              } else {
+                setEmptyDraft(title);
+              }
+            }}
+            onBlur={() => setEmptyDraft(null)}
             className="mt-3 w-full bg-transparent font-display text-lg font-semibold text-[var(--ink)] outline-none"
             aria-label="Column title"
           />

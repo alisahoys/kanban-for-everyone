@@ -33,6 +33,11 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
   const board = sync.board;
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [chatPending, setChatPending] = useState(false);
+  const [aiChange, setAiChange] = useState<{
+    applied: BoardData;
+    previous: BoardData;
+  } | null>(null);
   const dragStartColumns = useRef<BoardData["columns"] | null>(null);
 
   const sensors = useSensors(
@@ -203,6 +208,20 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
     });
   };
 
+  const handleAiBoardUpdate = (nextBoard: BoardData) => {
+    setAiChange({ applied: nextBoard, previous: board });
+    sync.replaceFromServer(nextBoard);
+  };
+
+  const handleUndoAiChange = () => {
+    if (aiChange) {
+      sync.updateBoard(() => aiChange.previous);
+      setAiChange(null);
+    }
+  };
+
+  // Undo is offered only until the board changes again.
+  const canUndoAiChange = aiChange !== null && aiChange.applied === board;
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
 
   return (
@@ -220,7 +239,7 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
       <main className="relative mx-auto flex min-h-screen max-w-[1500px] flex-col gap-10 px-6 pb-16 pt-12">
         <header className="flex flex-col gap-6 rounded-[32px] border border-[var(--border)] bg-white/80 p-8 shadow-[var(--shadow)] backdrop-blur">
           <div className="flex flex-wrap items-start justify-between gap-6">
-            <div>
+            <div inert={chatPending}>
               <ProjectDetailsEditor
                 project={board.project}
                 onSave={(project) =>
@@ -264,6 +283,18 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
                 Retry save
               </button>
             ) : null}
+            {chatPending ? (
+              <p role="status">Board is locked while the assistant works.</p>
+            ) : null}
+            {canUndoAiChange ? (
+              <button
+                className="font-semibold text-[var(--berry)] underline"
+                onClick={handleUndoAiChange}
+                type="button"
+              >
+                Undo AI change
+              </button>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-4">
             {board.columns.map((column) => (
@@ -279,7 +310,17 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
         </header>
 
         <div className="space-y-8">
-          <section className="min-w-0 overflow-x-auto pb-2">
+          {/* Edits made while the assistant works would be overwritten by its reply. */}
+          <section
+            aria-busy={chatPending}
+            className={
+              chatPending
+                ? "min-w-0 overflow-x-auto pb-2 opacity-60"
+                : "min-w-0 overflow-x-auto pb-2"
+            }
+            data-testid="board-columns"
+            inert={chatPending}
+          >
             <DndContext
               id="kanban-board-dnd"
               sensors={sensors}
@@ -321,7 +362,8 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
           </section>
           <ChatSidebar
             beforeSend={sync.saveNow}
-            onBoardUpdate={(nextBoard) => sync.updateBoard(() => nextBoard)}
+            onBoardUpdate={handleAiBoardUpdate}
+            onSendingChange={setChatPending}
           />
         </div>
       </main>
