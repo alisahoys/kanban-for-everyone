@@ -1,23 +1,30 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { createMockBoardApi } from "@/test/mockBoardApi";
 
 const getFirstColumn = () => screen.getAllByTestId(/column-/i)[0];
 const renderBoard = () => render(<KanbanBoard onSignOut={() => {}} />);
 
 beforeEach(() => {
   localStorage.clear();
+  vi.stubGlobal("fetch", vi.fn(createMockBoardApi().fetchBoard));
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("KanbanBoard", () => {
-  it("renders five columns", () => {
+  it("renders five columns", async () => {
     renderBoard();
-    expect(screen.getAllByTestId(/column-/i)).toHaveLength(5);
+    expect(await screen.findAllByTestId(/column-/i)).toHaveLength(5);
   });
 
   it("renames a column", async () => {
     renderBoard();
+    await screen.findByTestId("column-col-backlog");
     const column = getFirstColumn();
     const input = within(column).getByLabelText("Column title");
     await userEvent.clear(input);
@@ -27,6 +34,7 @@ describe("KanbanBoard", () => {
 
   it("adds and removes a card", async () => {
     renderBoard();
+    await screen.findByTestId("column-col-backlog");
     const column = getFirstColumn();
     const addButton = within(column).getByRole("button", {
       name: /add a card/i,

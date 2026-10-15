@@ -1,4 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
+import { initialData } from "../src/lib/kanban";
+
+test.beforeEach(async ({ request }) => {
+  const response = await request.put("/api/users/demo-user/board", {
+    data: initialData,
+  });
+  expect(response.ok()).toBeTruthy();
+});
 
 async function signIn(page: Page) {
   await page.goto("/");
@@ -6,6 +14,18 @@ async function signIn(page: Page) {
   await page.getByLabel("Password").fill("password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
+}
+
+async function expectBoardStored(
+  page: Page,
+  matches: (board: typeof initialData) => boolean
+) {
+  await expect
+    .poll(async () => {
+      const response = await page.request.get("/api/users/demo-user/board");
+      return response.ok() && matches(await response.json());
+    })
+    .toBe(true);
 }
 
 test("requires valid credentials and keeps sign-in for the tab session", async ({ page }) => {
@@ -66,6 +86,27 @@ test("adds a card to a column", async ({ page }) => {
   await firstColumn.getByPlaceholder("Details").fill("Added via e2e.");
   await firstColumn.getByRole("button", { name: /add card/i }).click();
   await expect(firstColumn.getByText("Playwright card")).toBeVisible();
+  await expectBoardStored(page, (board) =>
+    Object.values(board.cards).some((card) => card.title === "Playwright card")
+  );
+});
+
+test("persists column renames and card deletion", async ({ page }) => {
+  await signIn(page);
+  const backlog = page.getByTestId("column-col-backlog");
+  await backlog.getByLabel("Column title").fill("Ready to start");
+  await expectBoardStored(page, (board) =>
+    board.columns[0]?.title === "Ready to start"
+  );
+
+  await backlog
+    .getByTestId("card-card-1")
+    .getByRole("button", { name: "Delete Align roadmap themes" })
+    .click();
+  await expectBoardStored(page, (board) =>
+    !Object.hasOwn(board.cards, "card-1") &&
+      board.columns.every((column) => !column.cardIds.includes("card-1"))
+  );
 });
 
 test("edits card text and restores the arrow cursor on press", async ({ page }) => {
@@ -96,6 +137,10 @@ test("edits card text and restores the arrow cursor on press", async ({ page }) 
 
   await expect(card.getByRole("heading", { name: "Updated roadmap themes" })).toBeVisible();
   await expect(card.getByText("Updated with Playwright.")).toBeVisible();
+  await expectBoardStored(page, (board) =>
+    board.cards["card-1"]?.title === "Updated roadmap themes" &&
+      board.cards["card-1"]?.details === "Updated with Playwright."
+  );
 });
 
 test("moves a card between columns", async ({ page }) => {
@@ -151,6 +196,9 @@ test("moves a card between columns", async ({ page }) => {
   await expect(dragOverlay).toBeHidden();
   await expect(targetColumn.getByTestId("card-card-1")).toHaveCSS("opacity", "1");
   await expect(targetColumn.getByTestId("card-card-1")).toHaveCSS("scale", "none");
+  await expectBoardStored(page, (board) =>
+    board.columns.find((column) => column.id === "col-review")?.cardIds.includes("card-1") === true
+  );
 });
 
 test("uses a subtle pattern on the oat beige columns", async ({ page }) => {

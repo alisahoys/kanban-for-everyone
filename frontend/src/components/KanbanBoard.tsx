@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -14,34 +14,18 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
-import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
-
-const boardStorageKey = "pm-kanban-board-v1";
-
-const readSavedBoard = (): BoardData => {
-  if (typeof window === "undefined") {
-    return initialData;
-  }
-
-  const savedBoard = window.localStorage.getItem(boardStorageKey);
-  if (!savedBoard) {
-    return initialData;
-  }
-
-  try {
-    return JSON.parse(savedBoard) as BoardData;
-  } catch {
-    return initialData;
-  }
-};
+import { createId, moveCard, type BoardData } from "@/lib/kanban";
+import { useBoardSync } from "@/hooks/useBoardSync";
 
 type KanbanBoardProps = {
   onSignOut: () => void;
 };
 
 export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
-  const [board, setBoard] = useState<BoardData>(readSavedBoard);
+  const sync = useBoardSync();
+  const board = sync.board;
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
   const dragStartColumns = useRef<BoardData["columns"] | null>(null);
 
   const sensors = useSensors(
@@ -50,11 +34,51 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
     })
   );
 
-  const cardsById = useMemo(() => board.cards, [board.cards]);
+  const cardsById = useMemo(() => board?.cards ?? {}, [board?.cards]);
 
-  useEffect(() => {
-    window.localStorage.setItem(boardStorageKey, JSON.stringify(board));
-  }, [board]);
+  const handleSignOut = async () => {
+    if (board) {
+      setSigningOut(true);
+      try {
+        await sync.saveNow();
+      } catch {
+        setSigningOut(false);
+        return;
+      }
+    }
+    onSignOut();
+  };
+
+  if (!board) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 py-12">
+        <p
+          role={sync.loadError ? "alert" : "status"}
+          className="text-sm text-[var(--muted)]"
+        >
+          {sync.loadError || "Loading your board..."}
+        </p>
+        {sync.loadError ? (
+          <div className="flex gap-3">
+            <button
+              className="rounded-full bg-[var(--mauve)] px-4 py-2 text-sm font-semibold text-white"
+              onClick={sync.retryLoad}
+              type="button"
+            >
+              Retry
+            </button>
+            <button
+              className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--ink)]"
+              onClick={onSignOut}
+              type="button"
+            >
+              Sign out
+            </button>
+          </div>
+        ) : null}
+      </main>
+    );
+  }
 
   const handleDragStart = (event: DragStartEvent) => {
     dragStartColumns.current = board.columns;
@@ -67,7 +91,7 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
       return;
     }
 
-    setBoard((prev) => {
+    sync.updateBoard((prev) => {
       const activeId = String(active.id);
       const overId = String(over.id);
       const overColumn = prev.columns.find(
@@ -90,7 +114,7 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
     if (!event.over) {
       const originalColumns = dragStartColumns.current;
       if (originalColumns) {
-        setBoard((prev) => ({ ...prev, columns: originalColumns }));
+        sync.updateBoard((prev) => ({ ...prev, columns: originalColumns }));
       }
     }
 
@@ -100,14 +124,14 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
   const handleDragCancel = () => {
     const originalColumns = dragStartColumns.current;
     if (originalColumns) {
-      setBoard((prev) => ({ ...prev, columns: originalColumns }));
+      sync.updateBoard((prev) => ({ ...prev, columns: originalColumns }));
     }
     dragStartColumns.current = null;
     setActiveCardId(null);
   };
 
   const handleRenameColumn = (columnId: string, title: string) => {
-    setBoard((prev) => ({
+    sync.updateBoard((prev) => ({
       ...prev,
       columns: prev.columns.map((column) =>
         column.id === columnId ? { ...column, title } : column
@@ -117,7 +141,7 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
 
   const handleAddCard = (columnId: string, title: string, details: string) => {
     const id = createId("card");
-    setBoard((prev) => ({
+    sync.updateBoard((prev) => ({
       ...prev,
       cards: {
         ...prev.cards,
@@ -132,7 +156,7 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
   };
 
   const handleEditCard = (cardId: string, title: string, details: string) => {
-    setBoard((prev) => ({
+    sync.updateBoard((prev) => ({
       ...prev,
       cards: {
         ...prev.cards,
@@ -142,7 +166,7 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
   };
 
   const handleDeleteCard = (columnId: string, cardId: string) => {
-    setBoard((prev) => {
+    sync.updateBoard((prev) => {
       return {
         ...prev,
         cards: Object.fromEntries(
@@ -200,12 +224,31 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
               </div>
               <button
                 className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--mauve)] hover:text-[var(--berry)]"
-                onClick={onSignOut}
+                disabled={signingOut}
+                onClick={() => void handleSignOut()}
                 type="button"
               >
-                Sign out
+                {signingOut ? "Saving..." : "Sign out"}
               </button>
             </div>
+          </div>
+          <div className="flex min-h-5 items-center gap-3 text-xs text-[var(--muted)]">
+            <p role={sync.saveStatus === "error" ? "alert" : "status"}>
+              {sync.saveStatus === "saving"
+                ? "Saving changes..."
+                : sync.saveStatus === "error"
+                  ? "Could not save your changes."
+                  : "All changes saved."}
+            </p>
+            {sync.saveStatus === "error" ? (
+              <button
+                className="font-semibold text-[var(--berry)] underline"
+                onClick={() => void sync.saveNow().catch(() => {})}
+                type="button"
+              >
+                Retry save
+              </button>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-4">
             {board.columns.map((column) => (

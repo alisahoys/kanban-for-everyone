@@ -1,11 +1,17 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SignInGate } from "@/components/SignInGate";
+import { createMockBoardApi } from "@/test/mockBoardApi";
 
 beforeEach(() => {
   sessionStorage.clear();
   localStorage.clear();
+  vi.stubGlobal("fetch", vi.fn(createMockBoardApi().fetchBoard));
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 const submitCredentials = async (username: string, password: string) => {

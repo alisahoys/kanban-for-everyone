@@ -35,6 +35,20 @@ def test_hello_endpoint_returns_message(client: TestClient) -> None:
     assert response.json() == {"message": "hello from the PM backend"}
 
 
+def test_next_development_origin_can_call_board_api(client: TestClient) -> None:
+    response = client.options(
+        "/api/users/demo-user/board",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "PUT",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+
 def test_next_static_assets_are_served(client: TestClient) -> None:
     page = client.get("/")
     assets = re.findall(r'(?:src|href)="(/_next/static/[^"]+)"', page.text)

@@ -1,8 +1,10 @@
 # High level steps for project
 
-Part 1: Plan
+Part 1: Planning - COMPLETE
 
-Enrich this document to plan out each of these parts in detail, with substeps listed out as a checklist to be checked off by the agent, and with tests and success critieria for each. Also create an AGENTS.md file inside the frontend directory that describes the existing code there. Ensure the user checks and approves the plan.
+- [x] Document the project parts, implementation steps, tests, and success criteria.
+- [x] Add `frontend/AGENTS.md` to describe the frontend and its development commands.
+- [x] Review and approve the plan before implementation.
 
 Part 2: Scaffolding - COMPLETE
 
@@ -69,14 +71,66 @@ Verification:
 - Passed: backend unit and real-server integration tests (17 tests, 100% coverage of backend app code).
 - Confirmed by the user in Ubuntu WSL: the Compose stack runs, the backend API works, and the board change persists after recreating the backend container.
 
-Part 7: Frontend + Backend
+Part 7: Frontend + Backend - COMPLETE
 
 Now have the frontend actually use the backend API, so that the app is a proper persistent Kanban board. Test very throughly.
 
-Part 8: AI connectivity
+- [x] Load the demo user's board from the backend API after sign-in and save board edits through full-board `PUT` requests.
+- [x] Keep the packaged static export same-origin; allow the Next.js development server on port 3000 to call the API on port 8000.
+- [x] Migrate a legacy browser-saved board once when the server still has the original seed; preserve the server board if it already has changes.
+- [x] Show loading, load failure/retry, and save status/retry in the board UI; flush pending changes before sign-out.
+- [x] Test legacy migration and server precedence, board UI mutations, API CORS, and end-to-end persistence against FastAPI.
+- [x] Confirm from the packaged Docker app that board changes persist after browser reload.
 
-Now allow the backend to make an AI call via OpenRouter. Test connectivity with a simple "2+2" test and ensure the AI call is working.
+Verification:
+- Passed: 18 frontend unit tests (79.51% statement coverage), frontend lint, and 18 backend tests (100% backend coverage).
+- Passed: `npm.cmd run test:e2e` (production build plus 7 Playwright tests against FastAPI), including API-backed create, edit, move, rename, and delete checks. Final command exit code: 0.
+- Passed against the packaged Docker app: all 7 Playwright tests against port 8000, health and board API requests, and frontend serving.
+- Passed Docker persistence check: a temporary API board change survived `docker compose up -d --force-recreate backend`; the original 9-card board was restored and verified afterward. The named volume was preserved.
 
-Part 9: Now extend the backend call so that it always calls the AI with the JSON of the Kanban board, plus the user's question (and conversation history). The AI should respond with Structured Outputs that includes the response to the user and optionaly an update to the Kanban. Test thoroughly.
+Part 8: AI connectivity - NOT STARTED
 
-Part 10: Now add a beautiful sidebar widget to the UI supporting full AI chat, and allowing the LLM (as it determines) to update the Kanban based on its Structured Outputs. If the AI updates the Kanban, then the UI should refresh automatically.
+Add a small server-side OpenRouter integration and verify that a configured model can answer a simple `2+2` prompt. Keep the API key on the backend and out of logs and browser code.
+
+- [ ] Read `OPENROUTER_API_KEY` from the backend environment and return a clear configuration error when it is missing; never expose or log its value.
+- [ ] Add a small backend OpenRouter client using a suitable free model and a bounded request timeout.
+- [ ] Add unit tests for successful responses, provider errors, timeouts, and missing configuration using mocked HTTP responses.
+- [ ] Add an opt-in smoke-test command that sends `2+2` to OpenRouter and checks that the returned answer is correct; do not require a live key for the normal test suite.
+- [ ] Document how to run the smoke test without printing the key.
+
+Tests and success criteria:
+- Unit tests pass without network access or a configured API key.
+- With a valid key and provider access, the smoke test completes and returns an answer equivalent to `4`.
+- Missing keys and provider failures produce actionable errors without revealing credentials.
+
+Part 9: Board-aware AI API - NOT STARTED
+
+Extend the backend AI request to include the persisted board, the user's question, and conversation history. Require a structured response containing user-facing text and an optional validated board update.
+
+- [ ] Define request and response schemas for a user question, bounded conversation history, response text, and optional board update.
+- [ ] Add a chat API route scoped to the demo user's board; load the current board from SQLite for every request and include it with the question and history in the model input.
+- [ ] Require structured model output and validate any returned board update with the existing board schema before saving it transactionally.
+- [ ] Return the assistant response and the resulting board only when an update was accepted and saved.
+- [ ] Add unit and API tests for responses without changes, valid updates, malformed structured output, invalid board updates, and provider failures.
+- [ ] Add a live smoke check using a configured API key while keeping automated tests deterministic and network independent.
+
+Tests and success criteria:
+- The model receives the current persisted board, the user's question, and the supplied conversation history.
+- Valid optional updates are persisted and returned; absent or invalid updates never alter the board.
+- Automated tests cover the API contract and failure paths without calling OpenRouter.
+
+Part 10: AI chat sidebar - NOT STARTED
+
+Add a sidebar chat interface that uses the board-aware API and applies accepted board updates to the visible board.
+
+- [ ] Add a responsive sidebar with conversation history, a question input, send action, loading state, and readable error handling.
+- [ ] Send the question and relevant conversation history to the backend chat API; keep OpenRouter credentials server-side.
+- [ ] Show the assistant response and apply a returned board update to the existing board state so the board refreshes immediately.
+- [ ] Add focused unit tests for chat submission, response rendering, loading/errors, and applying an updated board.
+- [ ] Extend Playwright coverage for a normal AI reply and an AI response that changes the board; use a deterministic mocked API for browser tests.
+- [ ] Verify the built Docker app with a live OpenRouter call when credentials and provider access are available.
+
+Tests and success criteria:
+- Chat works at desktop and narrow viewport sizes without blocking board interactions outside the sidebar.
+- A text-only reply leaves the board unchanged; a validated board update appears immediately and persists through the existing board API.
+- Automated tests remain runnable without an OpenRouter key or live network access.

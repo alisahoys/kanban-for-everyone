@@ -11,7 +11,9 @@ This directory contains the Next.js-based frontend for the project management MV
 - UI building blocks such as cards, columns, and forms live under `src/components/`
 - The project already includes unit tests and Playwright smoke tests
 - The demo sign-in is client-side only and stores its state in `sessionStorage`; it is not backend authentication
-- Board changes are saved in browser `localStorage` and survive reload and sign-out on that browser; the board is not yet persisted by the backend
+- The board loads from `GET /api/users/demo-user/board` and changes are saved with full-board `PUT` requests
+- The prior `pm-kanban-board-v1` local-storage board is migrated once only when the backend still contains the original seed board; an already changed server board takes precedence
+- The demo sign-in remains client-side only and is not authorization for the board API
 
 ## Common commands
 
@@ -24,4 +26,4 @@ npm run test:e2e
 
 ## Notes
 
-This frontend is not yet connected to the backend API or real authentication. The static export is served by FastAPI in the Docker image; Playwright runs against that FastAPI-served export.
+The static export is served by FastAPI in the Docker image; Playwright runs against that FastAPI-served export and verifies board changes through the API.

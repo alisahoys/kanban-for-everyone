@@ -2,6 +2,7 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.database import DATABASE_PATH, initialize_database, load_board, save_board
@@ -19,6 +20,12 @@ def create_app(database_path: Path = DATABASE_PATH) -> FastAPI:
 
     application = FastAPI(title="PM Backend", lifespan=lifespan)
     application.state.database_path = database_path
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_methods=["GET", "PUT"],
+        allow_headers=["Content-Type"],
+    )
 
     @application.get("/api/health")
     async def health() -> dict[str, str]:
