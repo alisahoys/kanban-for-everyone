@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import clsx from "clsx";
 import {
   DndContext,
   DragOverlay,
@@ -16,16 +17,17 @@ import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { ProjectDetailsEditor } from "@/components/ProjectDetailsEditor";
-import {
-  createId,
-  moveCard,
-  type BoardData,
-  type CardPriority,
-} from "@/lib/kanban";
+import { createId, moveCard, type BoardData, type CardFields } from "@/lib/kanban";
 import { useBoardSync } from "@/hooks/useBoardSync";
 
 type KanbanBoardProps = {
   onSignOut: () => void;
+};
+
+const saveStatusText = {
+  saving: "Saving changes...",
+  error: "Could not save your changes.",
+  saved: "All changes saved.",
 };
 
 export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
@@ -46,8 +48,6 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
     })
   );
 
-  const cardsById = useMemo(() => board?.cards ?? {}, [board?.cards]);
-
   const handleSignOut = async () => {
     if (board) {
       setSigningOut(true);
@@ -66,24 +66,16 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 py-12">
         <p
           role={sync.loadError ? "alert" : "status"}
-          className="text-sm text-[var(--muted)]"
+          className="text-sm text-[var(--ink-soft)]"
         >
           {sync.loadError || "Loading your board..."}
         </p>
         {sync.loadError ? (
           <div className="flex gap-3">
-            <button
-              className="rounded-full bg-[var(--mauve)] px-4 py-2 text-sm font-semibold text-white"
-              onClick={sync.retryLoad}
-              type="button"
-            >
+            <button className="btn btn-primary" onClick={sync.retryLoad} type="button">
               Retry
             </button>
-            <button
-              className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--ink)]"
-              onClick={onSignOut}
-              type="button"
-            >
+            <button className="btn btn-ghost" onClick={onSignOut} type="button">
               Sign out
             </button>
           </div>
@@ -104,43 +96,23 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
     }
 
     sync.updateBoard((prev) => {
-      const activeId = String(active.id);
-      const overId = String(over.id);
-      const overColumn = prev.columns.find(
-        (column) =>
-          column.id === overId || column.cardIds.includes(overId)
-      );
-
-      if (!overColumn) {
-        return prev;
-      }
-
-      const columns = moveCard(prev.columns, activeId, overId);
+      const columns = moveCard(prev.columns, String(active.id), String(over.id));
       return columns === prev.columns ? prev : { ...prev, columns };
     });
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    setActiveCardId(null);
-
-    if (!event.over) {
-      const originalColumns = dragStartColumns.current;
-      if (originalColumns) {
-        sync.updateBoard((prev) => ({ ...prev, columns: originalColumns }));
-      }
-    }
-
-    dragStartColumns.current = null;
-  };
-
-  const handleDragCancel = () => {
+  const finishDrag = (restoreColumns: boolean) => {
     const originalColumns = dragStartColumns.current;
-    if (originalColumns) {
+    if (restoreColumns && originalColumns) {
       sync.updateBoard((prev) => ({ ...prev, columns: originalColumns }));
     }
     dragStartColumns.current = null;
     setActiveCardId(null);
   };
+
+  const handleDragEnd = (event: DragEndEvent) => finishDrag(!event.over);
+
+  const handleDragCancel = () => finishDrag(true);
 
   const handleRenameColumn = (columnId: string, title: string) => {
     sync.updateBoard((prev) => ({
@@ -151,19 +123,13 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
     }));
   };
 
-  const handleAddCard = (
-    columnId: string,
-    title: string,
-    details: string,
-    priority: CardPriority | null,
-    dueDate: string | null
-  ) => {
+  const handleAddCard = (columnId: string, fields: CardFields) => {
     const id = createId("card");
     sync.updateBoard((prev) => ({
       ...prev,
       cards: {
         ...prev.cards,
-        [id]: { id, title, details: details || "No details yet.", priority, dueDate },
+        [id]: { id, ...fields, details: fields.details || "No details yet." },
       },
       columns: prev.columns.map((column) =>
         column.id === columnId
@@ -173,39 +139,25 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
     }));
   };
 
-  const handleEditCard = (
-    cardId: string,
-    title: string,
-    details: string,
-    priority: CardPriority | null,
-    dueDate: string | null
-  ) => {
+  const handleEditCard = (cardId: string, fields: CardFields) => {
     sync.updateBoard((prev) => ({
       ...prev,
-      cards: {
-        ...prev.cards,
-        [cardId]: { ...prev.cards[cardId], title, details, priority, dueDate },
-      },
+      cards: { ...prev.cards, [cardId]: { id: cardId, ...fields } },
     }));
   };
 
   const handleDeleteCard = (columnId: string, cardId: string) => {
-    sync.updateBoard((prev) => {
-      return {
-        ...prev,
-        cards: Object.fromEntries(
-          Object.entries(prev.cards).filter(([id]) => id !== cardId)
-        ),
-        columns: prev.columns.map((column) =>
-          column.id === columnId
-            ? {
-                ...column,
-                cardIds: column.cardIds.filter((id) => id !== cardId),
-              }
-            : column
-        ),
-      };
-    });
+    sync.updateBoard((prev) => ({
+      ...prev,
+      cards: Object.fromEntries(
+        Object.entries(prev.cards).filter(([id]) => id !== cardId)
+      ),
+      columns: prev.columns.map((column) =>
+        column.id === columnId
+          ? { ...column, cardIds: column.cardIds.filter((id) => id !== cardId) }
+          : column
+      ),
+    }));
   };
 
   const handleAiBoardUpdate = (nextBoard: BoardData) => {
@@ -222,57 +174,44 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
 
   // Undo is offered only until the board changes again.
   const canUndoAiChange = aiChange !== null && aiChange.applied === board;
-  const activeCard = activeCardId ? cardsById[activeCardId] : null;
+  const activeCard = activeCardId ? board.cards[activeCardId] : null;
 
   return (
     <div
-      className={
-        activeCardId
-          ? "kanban-drag-active project-floral-surface relative overflow-hidden"
-          : "project-floral-surface relative overflow-hidden"
-      }
+      className={clsx(
+        "project-floral-surface min-h-screen",
+        activeCardId && "kanban-drag-active"
+      )}
       data-dragging={activeCardId !== null}
     >
-      <div className="pointer-events-none absolute left-0 top-0 h-[420px] w-[420px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,_rgba(242,213,221,0.55)_0%,_rgba(242,213,221,0.12)_55%,_transparent_70%)]" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-[520px] w-[520px] translate-x-1/4 translate-y-1/4 rounded-full bg-[radial-gradient(circle,_rgba(213,154,170,0.30)_0%,_rgba(213,154,170,0.08)_55%,_transparent_75%)]" />
-
-      <main className="relative mx-auto flex min-h-screen max-w-[1500px] flex-col gap-10 px-6 pb-16 pt-12">
-        <header className="flex flex-col gap-6 rounded-[32px] border border-[var(--border)] bg-white/80 p-8 shadow-[var(--shadow)] backdrop-blur">
-          <div className="flex flex-wrap items-start justify-between gap-6">
-            <div inert={chatPending}>
-              <ProjectDetailsEditor
-                project={board.project}
-                onSave={(project) =>
-                  sync.updateBoard((prev) => ({ ...prev, project }))
-                }
+      <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--background)]/90 backdrop-blur">
+        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-3">
+          <p className="flex items-center gap-2 font-display text-sm font-semibold text-[var(--berry)]">
+            <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+              <rect x="1" y="2" width="4" height="12" rx="1.5" />
+              <rect x="6" y="2" width="4" height="8" rx="1.5" opacity="0.7" />
+              <rect x="11" y="2" width="4" height="5" rx="1.5" opacity="0.45" />
+            </svg>
+            Kanban Studio
+          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--ink-soft)]">
+            <p
+              className={clsx(
+                "flex items-center gap-2",
+                sync.saveStatus === "error" && "font-semibold text-[var(--berry)]"
+              )}
+              role={sync.saveStatus === "error" ? "alert" : "status"}
+            >
+              <span
+                aria-hidden="true"
+                className={clsx(
+                  "h-1.5 w-1.5 rounded-full",
+                  sync.saveStatus === "saved" && "bg-[var(--primary-accent)]",
+                  sync.saveStatus === "saving" && "animate-pulse bg-[var(--mauve)]",
+                  sync.saveStatus === "error" && "bg-[var(--berry)]"
+                )}
               />
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--muted)]">
-                  Focus
-                </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--mauve)]">
-                  One board. Five columns. Zero clutter.
-                </p>
-              </div>
-              <button
-                className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--mauve)] hover:text-[var(--berry)]"
-                disabled={signingOut}
-                onClick={() => void handleSignOut()}
-                type="button"
-              >
-                {signingOut ? "Saving..." : "Sign out"}
-              </button>
-            </div>
-          </div>
-          <div className="flex min-h-5 items-center gap-3 text-xs text-[var(--muted)]">
-            <p role={sync.saveStatus === "error" ? "alert" : "status"}>
-              {sync.saveStatus === "saving"
-                ? "Saving changes..."
-                : sync.saveStatus === "error"
-                  ? "Could not save your changes."
-                  : "All changes saved."}
+              {saveStatusText[sync.saveStatus]}
             </p>
             {sync.saveStatus === "error" ? (
               <button
@@ -295,19 +234,25 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
                 Undo AI change
               </button>
             ) : null}
+            <button
+              className="btn btn-ghost btn-sm"
+              disabled={signingOut}
+              onClick={() => void handleSignOut()}
+              type="button"
+            >
+              {signingOut ? "Saving..." : "Sign out"}
+            </button>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            {board.columns.map((column) => (
-              <div
-                key={column.id}
-                className="flex items-center gap-2 rounded-full border border-[var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink)]"
-              >
-                <span className="h-2 w-2 rounded-full bg-[var(--primary-accent)]" />
-                {column.title}
-              </div>
-            ))}
-          </div>
-        </header>
+        </div>
+      </header>
+
+      <main className="mx-auto flex max-w-[1500px] flex-col gap-8 px-6 pb-16 pt-10">
+        <div inert={chatPending}>
+          <ProjectDetailsEditor
+            project={board.project}
+            onSave={(project) => sync.updateBoard((prev) => ({ ...prev, project }))}
+          />
+        </div>
 
         <div className="space-y-8">
           {/* Edits made while the assistant works would be overwritten by its reply. */}
@@ -330,7 +275,7 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
               onDragEnd={handleDragEnd}
               onDragCancel={handleDragCancel}
             >
-              <section className="grid gap-6 sm:grid-cols-2 lg:min-w-[1200px] lg:grid-cols-5">
+              <section className="board-reveal grid gap-4 sm:grid-cols-2 lg:min-w-[1180px] lg:grid-cols-5">
                 {board.columns.map((column) => (
                   <KanbanColumn
                     key={column.id}
@@ -352,7 +297,7 @@ export const KanbanBoard = ({ onSignOut }: KanbanBoardProps) => {
                 {activeCard ? (
                   <div
                     data-testid={`drag-overlay-${activeCard.id}`}
-                    className="w-[260px]"
+                    className="w-[240px] rotate-2"
                   >
                     <KanbanCardPreview card={activeCard} />
                   </div>

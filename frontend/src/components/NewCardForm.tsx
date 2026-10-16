@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import type { CardPriority } from "@/lib/kanban";
+import type { CardFields, CardPriority } from "@/lib/kanban";
 
 const initialFormState = {
   title: "",
@@ -9,45 +9,49 @@ const initialFormState = {
 };
 
 type NewCardFormProps = {
-  onAdd: (
-    title: string,
-    details: string,
-    priority: CardPriority | null,
-    dueDate: string | null
-  ) => void;
+  onAdd: (fields: CardFields) => void;
 };
 
 export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [formState, setFormState] = useState(initialFormState);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!formState.title.trim()) {
-      return;
-    }
-    onAdd(
-      formState.title.trim(),
-      formState.details.trim(),
-      formState.priority,
-      formState.dueDate || null
-    );
+  const close = () => {
     setFormState(initialFormState);
     setIsOpen(false);
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const title = formState.title.trim();
+    if (!title) {
+      return;
+    }
+    onAdd({
+      title,
+      details: formState.details.trim(),
+      priority: formState.priority,
+      dueDate: formState.dueDate || null,
+    });
+    close();
   };
 
   return (
     <div className="mt-4">
       {isOpen ? (
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-3 rounded-xl border border-[var(--border)] bg-white/60 p-3"
+        >
           <input
+            autoFocus
             maxLength={200}
             value={formState.title}
             onChange={(event) =>
               setFormState((prev) => ({ ...prev, title: event.target.value }))
             }
             placeholder="Card title"
-            className="w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-medium text-[var(--ink)] outline-none transition focus:border-[var(--mauve)]"
+            className="field font-medium"
             required
           />
           <textarea
@@ -58,10 +62,10 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
             }
             placeholder="Details"
             rows={3}
-            className="w-full resize-none rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--muted)] outline-none transition focus:border-[var(--mauve)]"
+            className="field resize-none leading-6"
           />
           <div className="space-y-3">
-            <label className="grid gap-1 text-xs font-semibold text-[var(--muted)]">
+            <label className="field-label">
               Priority
               <select
                 aria-label="Priority"
@@ -72,7 +76,7 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
                     priority: (event.target.value || null) as CardPriority | null,
                   }))
                 }
-                className="w-full min-w-0 rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--ink)]"
+                className="field"
               >
                 <option value="">No priority</option>
                 <option value="low">Low</option>
@@ -80,7 +84,7 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
                 <option value="high">High</option>
               </select>
             </label>
-            <label className="grid gap-1 text-xs font-semibold text-[var(--muted)]">
+            <label className="field-label">
               Due date
               <input
                 aria-label="Due date"
@@ -89,25 +93,15 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
                 onChange={(event) =>
                   setFormState((prev) => ({ ...prev, dueDate: event.target.value }))
                 }
-                className="w-full min-w-0 rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--ink)]"
+                className="field"
               />
             </label>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              className="rounded-full bg-[var(--mauve)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:brightness-110"
-            >
+            <button type="submit" className="btn btn-primary btn-sm">
               Add card
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                setFormState(initialFormState);
-              }}
-              className="rounded-full border border-[var(--border)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)] transition hover:text-[var(--ink)]"
-            >
+            <button type="button" onClick={close} className="btn btn-ghost btn-sm">
               Cancel
             </button>
           </div>
@@ -116,9 +110,9 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="w-full rounded-full border border-dashed border-[var(--border)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--mauve)] transition hover:border-[var(--mauve)]"
+          className="w-full rounded-xl border border-dashed border-[var(--mauve)]/50 px-3 py-2 text-sm font-semibold text-[var(--berry)] transition hover:border-solid hover:bg-white/60"
         >
-          Add a card
+          <span aria-hidden="true">+ </span>Add a card
         </button>
       )}
     </div>

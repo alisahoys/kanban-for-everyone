@@ -47,7 +47,7 @@ export const SignInGate = () => {
   if (authStatus === "checking") {
     return (
       <main className="flex min-h-screen items-center justify-center px-6 py-12">
-        <p role="status" className="text-sm text-[var(--muted)]">
+        <p role="status" className="text-sm text-[var(--ink-soft)]">
           Checking your session...
         </p>
       </main>
@@ -59,21 +59,26 @@ export const SignInGate = () => {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-12">
+    <main className="project-floral-surface flex min-h-screen items-center justify-center px-6 py-12">
       <section
         aria-labelledby="sign-in-title"
-        className="w-full max-w-md rounded-[32px] border border-[var(--border)] bg-white/90 p-8 shadow-[var(--shadow)] backdrop-blur sm:p-10"
+        className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-white p-8 shadow-[var(--shadow)] sm:p-10"
       >
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--muted)]">
+        <p className="flex items-center gap-2 font-display text-sm font-semibold text-[var(--berry)]">
+          <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+            <rect x="1" y="2" width="4" height="12" rx="1.5" />
+            <rect x="6" y="2" width="4" height="8" rx="1.5" opacity="0.7" />
+            <rect x="11" y="2" width="4" height="5" rx="1.5" opacity="0.45" />
+          </svg>
           Kanban Studio
         </p>
         <h1
           id="sign-in-title"
-          className="mt-4 font-display text-3xl font-semibold text-[var(--ink)]"
+          className="mt-6 font-display text-3xl font-semibold text-[var(--ink)]"
         >
           Sign in
         </h1>
-        <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+        <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
           Sign in to open your project board.
         </p>
 
@@ -81,13 +86,13 @@ export const SignInGate = () => {
           <div>
             <label
               htmlFor="username"
-              className="mb-2 block text-sm font-medium text-[var(--ink)]"
+              className="mb-1.5 block text-sm font-semibold text-[var(--ink)]"
             >
               Username
             </label>
             <input
               autoComplete="username"
-              className="w-full rounded-xl border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--mauve)]"
+              className="field py-3"
               id="username"
               name="username"
               onChange={(event) => setUsername(event.target.value)}
@@ -99,13 +104,13 @@ export const SignInGate = () => {
           <div>
             <label
               htmlFor="password"
-              className="mb-2 block text-sm font-medium text-[var(--ink)]"
+              className="mb-1.5 block text-sm font-semibold text-[var(--ink)]"
             >
               Password
             </label>
             <input
               autoComplete="current-password"
-              className="w-full rounded-xl border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--mauve)]"
+              className="field py-3"
               id="password"
               name="password"
               onChange={(event) => setPassword(event.target.value)}
@@ -121,15 +126,12 @@ export const SignInGate = () => {
             </p>
           ) : null}
 
-          <button
-            className="w-full rounded-xl bg-[var(--mauve)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110"
-            type="submit"
-          >
+          <button className="btn btn-primary w-full py-3" type="submit">
             Sign in
           </button>
         </form>
 
-        <p className="mt-6 text-xs text-[var(--muted)]">
+        <p className="mt-6 text-xs text-[var(--ink-soft)]">
           Demo credentials: user / password
         </p>
       </section>

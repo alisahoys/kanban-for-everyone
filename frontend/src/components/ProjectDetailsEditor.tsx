@@ -1,11 +1,7 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
-
-type Project = {
-  name: string;
-  description: string;
-};
+import { useState, type FormEvent } from "react";
+import type { Project } from "@/lib/kanban";
 
 type ProjectDetailsEditorProps = {
   project: Project;
@@ -17,15 +13,10 @@ export const ProjectDetailsEditor = ({ project, onSave }: ProjectDetailsEditorPr
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description);
 
-  useEffect(() => {
+  const startEditing = () => {
     setName(project.name);
     setDescription(project.description);
-  }, [project]);
-
-  const cancel = () => {
-    setName(project.name);
-    setDescription(project.description);
-    setEditing(false);
+    setEditing(true);
   };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -40,21 +31,16 @@ export const ProjectDetailsEditor = ({ project, onSave }: ProjectDetailsEditorPr
 
   if (!editing) {
     return (
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--muted)]">
-          Project
-        </p>
-        <h1 className="mt-3 font-display text-4xl font-semibold text-[var(--ink)]">
-          {project.name}
-        </h1>
-        <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--muted)]">
-          {project.description}
-        </p>
-        <button
-          className="mt-3 text-sm font-semibold text-[var(--berry)] underline"
-          onClick={() => setEditing(true)}
-          type="button"
-        >
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-3xl font-semibold leading-tight text-[var(--ink)] sm:text-4xl">
+            {project.name}
+          </h1>
+          <p className="mt-2 max-w-2xl text-base leading-7 text-[var(--ink-soft)]">
+            {project.description}
+          </p>
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={startEditing} type="button">
           Edit project details
         </button>
       </div>
@@ -63,38 +49,31 @@ export const ProjectDetailsEditor = ({ project, onSave }: ProjectDetailsEditorPr
 
   return (
     <form className="grid max-w-2xl gap-3" onSubmit={submit}>
-      <label className="grid gap-1 text-sm font-semibold text-[var(--ink)]">
+      <label className="field-label">
         Project name
         <input
           autoFocus
-          className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 font-display text-2xl"
+          className="field font-display text-2xl"
           maxLength={120}
           onChange={(event) => setName(event.target.value)}
           required
           value={name}
         />
       </label>
-      <label className="grid gap-1 text-sm font-semibold text-[var(--ink)]">
+      <label className="field-label">
         Project description
         <textarea
-          className="min-h-20 rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-normal leading-6"
+          className="field min-h-20 font-normal leading-6"
           maxLength={2000}
           onChange={(event) => setDescription(event.target.value)}
           value={description}
         />
       </label>
       <div className="flex gap-3">
-        <button
-          className="rounded-full bg-[var(--mauve)] px-4 py-2 text-sm font-semibold text-white"
-          type="submit"
-        >
+        <button className="btn btn-primary" type="submit">
           Save project details
         </button>
-        <button
-          className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--ink)]"
-          onClick={cancel}
-          type="button"
-        >
+        <button className="btn btn-ghost" onClick={() => setEditing(false)} type="button">
           Cancel
         </button>
       </div>

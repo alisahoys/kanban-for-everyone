@@ -64,38 +64,50 @@ export const ChatSidebar = ({
       <button
         aria-controls="board-chat-panel"
         aria-expanded={expanded}
-        className="mb-4 flex w-full items-center justify-between rounded-2xl border border-[var(--border)] bg-white/90 px-5 py-4 text-left text-sm font-semibold text-[var(--ink)] shadow-[var(--shadow)]"
+        className="mb-3 flex w-full items-center justify-between rounded-xl border border-[var(--border)] bg-white px-5 py-3.5 text-left text-sm font-semibold text-[var(--ink)] shadow-[var(--shadow)] transition hover:border-[var(--mauve)]"
         onClick={() => setExpanded((open) => !open)}
         type="button"
       >
-        <span>AI assistant</span>
-        <span className="text-[var(--berry)]">
+        <span className="font-display">AI assistant</span>
+        <span className="flex items-center gap-2 text-[var(--berry)]">
           {expanded ? "Close" : "Open chat"}
+          <svg
+            aria-hidden="true"
+            className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M4 10l4-4 4 4" />
+          </svg>
         </span>
       </button>
 
       <aside
         aria-label="AI assistant"
-        className={`${expanded ? "flex" : "hidden"} h-[min(640px,75dvh)] min-h-[400px] flex-col overflow-hidden rounded-3xl border border-[var(--border)] bg-white/95 shadow-[var(--shadow)]`}
+        className={`${expanded ? "flex" : "hidden"} h-[min(640px,75dvh)] min-h-[400px] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-[var(--shadow)]`}
         id="board-chat-panel"
       >
-        <header className="border-b border-[var(--border)] bg-[var(--surface)] px-5 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--muted)]">
-            Project assistant
-          </p>
-          <h2 className="mt-1 font-display text-xl font-semibold text-[var(--ink)]">
+        <header className="border-b border-[var(--border)] px-5 py-4">
+          <h2 className="font-display text-lg font-semibold text-[var(--ink)]">
             Board chat
           </h2>
+          <p className="mt-0.5 text-sm text-[var(--ink-soft)]">
+            Ask a question, or have the assistant add, edit or move cards.
+          </p>
         </header>
 
         <div
           aria-label="Conversation"
           aria-live="polite"
-          className="chat-floral-surface min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4"
+          className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[var(--background)] px-4 py-4"
           role="log"
         >
           {turns.length === 0 && !pendingQuestion ? (
-            <p className="rounded-2xl bg-[var(--background)] px-4 py-3 text-sm leading-6 text-[var(--muted)]">
+            <p className="rounded-xl border border-dashed border-[var(--mauve)]/40 px-4 py-3 text-sm leading-6 text-[var(--ink-soft)]">
               Ask about your project or request a change to the board.
             </p>
           ) : null}
@@ -103,8 +115,8 @@ export const ChatSidebar = ({
             <p
               className={
                 turn.role === "user"
-                  ? "ml-6 rounded-2xl rounded-br-md bg-[var(--blush)] px-4 py-3 text-sm leading-6 text-[var(--ink)]"
-                  : "mr-4 rounded-2xl rounded-bl-md bg-[var(--background)] px-4 py-3 text-sm leading-6 text-[var(--ink)]"
+                  ? "ml-10 rounded-2xl rounded-br-md bg-[var(--berry)] px-4 py-2.5 text-sm leading-6 text-white"
+                  : "mr-10 rounded-2xl rounded-bl-md border border-[var(--border)] bg-white px-4 py-2.5 text-sm leading-6 text-[var(--ink)]"
               }
               key={`${turn.role}-${index}`}
             >
@@ -113,10 +125,15 @@ export const ChatSidebar = ({
           ))}
           {pendingQuestion ? (
             <>
-              <p className="ml-6 rounded-2xl rounded-br-md bg-[var(--blush)] px-4 py-3 text-sm leading-6 text-[var(--ink)]">
+              <p className="ml-10 rounded-2xl rounded-br-md bg-[var(--berry)] px-4 py-2.5 text-sm leading-6 text-white">
                 {pendingQuestion}
               </p>
-              <p className="text-sm text-[var(--muted)]" role="status">
+              <p className="flex items-center gap-2 text-sm text-[var(--ink-soft)]" role="status">
+                <span aria-hidden="true" className="flex gap-1">
+                  <span className="thinking-dot h-1.5 w-1.5 rounded-full bg-[var(--mauve)]" />
+                  <span className="thinking-dot h-1.5 w-1.5 rounded-full bg-[var(--mauve)] [animation-delay:0.2s]" />
+                  <span className="thinking-dot h-1.5 w-1.5 rounded-full bg-[var(--mauve)] [animation-delay:0.4s]" />
+                </span>
                 Assistant is thinking...
               </p>
             </>
@@ -124,7 +141,7 @@ export const ChatSidebar = ({
         </div>
 
         {error ? (
-          <p className="mx-4 mb-2 rounded-xl bg-[var(--blush)] px-3 py-2 text-sm text-[var(--berry)]" role="alert">
+          <p className="mx-4 mt-3 rounded-xl bg-[var(--blush)] px-3 py-2 text-sm text-[var(--berry)]" role="alert">
             {error}
           </p>
         ) : null}
@@ -137,7 +154,7 @@ export const ChatSidebar = ({
             Ask the assistant
           </label>
           <textarea
-            className="min-h-20 w-full resize-y rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm leading-6 text-[var(--ink)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--mauve)]"
+            className="field min-h-20 resize-y leading-6"
             id="board-chat-question"
             maxLength={2000}
             onChange={(event) => setDraft(event.target.value)}
@@ -145,11 +162,11 @@ export const ChatSidebar = ({
             value={draft}
           />
           <div className="mt-3 flex items-center justify-between gap-3">
-            <span className="text-xs text-[var(--muted)]">
+            <span className="text-xs text-[var(--ink-soft)]">
               {sending ? "Sending..." : "AI can update your board"}
             </span>
             <button
-              className="rounded-full bg-[var(--mauve)] px-5 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn btn-primary"
               disabled={sending || !draft.trim()}
               type="submit"
             >

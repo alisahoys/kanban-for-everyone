@@ -2,7 +2,7 @@ import { useState } from "react";
 import clsx from "clsx";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import type { Card, CardPriority, Column } from "@/lib/kanban";
+import type { Card, CardFields, Column } from "@/lib/kanban";
 import { KanbanCard } from "@/components/KanbanCard";
 import { NewCardForm } from "@/components/NewCardForm";
 
@@ -10,20 +10,8 @@ type KanbanColumnProps = {
   column: Column;
   cards: Card[];
   onRename: (columnId: string, title: string) => void;
-  onAddCard: (
-    columnId: string,
-    title: string,
-    details: string,
-    priority: CardPriority | null,
-    dueDate: string | null
-  ) => void;
-  onEditCard: (
-    cardId: string,
-    title: string,
-    details: string,
-    priority: CardPriority | null,
-    dueDate: string | null
-  ) => void;
+  onAddCard: (columnId: string, fields: CardFields) => void;
+  onEditCard: (cardId: string, fields: CardFields) => void;
   onDeleteCard: (columnId: string, cardId: string) => void;
 };
 
@@ -43,38 +31,35 @@ export const KanbanColumn = ({
     <section
       ref={setNodeRef}
       className={clsx(
-        "kanban-column-surface flex min-h-[520px] flex-col rounded-3xl border border-[var(--border)] p-4 shadow-[var(--shadow)] transition",
+        "kanban-column-surface flex min-h-[480px] flex-col rounded-2xl border border-[var(--border)] p-3 shadow-[var(--shadow)] transition",
         isOver && "ring-2 ring-[var(--primary-accent)]"
       )}
       data-testid={`column-${column.id}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="w-full">
-          <div className="flex items-center gap-3">
-            <div className="h-2 w-10 rounded-full bg-[var(--primary-accent)]" />
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
-              {cards.length} cards
-            </span>
-          </div>
-          <input
-            value={emptyDraft ?? column.title}
-            maxLength={60}
-            onChange={(event) => {
-              const title = event.target.value;
-              if (title.trim()) {
-                setEmptyDraft(null);
-                onRename(column.id, title);
-              } else {
-                setEmptyDraft(title);
-              }
-            }}
-            onBlur={() => setEmptyDraft(null)}
-            className="mt-3 w-full bg-transparent font-display text-lg font-semibold text-[var(--ink)] outline-none"
-            aria-label="Column title"
-          />
-        </div>
+      <div className="flex items-center gap-2 px-1 pt-1">
+        <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--mauve)]" />
+        <input
+          value={emptyDraft ?? column.title}
+          maxLength={60}
+          onChange={(event) => {
+            const title = event.target.value;
+            if (title.trim()) {
+              setEmptyDraft(null);
+              onRename(column.id, title);
+            } else {
+              setEmptyDraft(title);
+            }
+          }}
+          onBlur={() => setEmptyDraft(null)}
+          className="min-w-0 flex-1 rounded-md bg-transparent px-1 py-0.5 font-display text-base font-semibold text-[var(--ink)] outline-none transition hover:bg-white/50 focus:bg-white focus:ring-2 focus:ring-[var(--mauve)]/30"
+          aria-label="Column title"
+        />
+        <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-semibold tabular-nums text-[var(--ink-soft)]">
+          {cards.length}
+          <span className="sr-only"> cards</span>
+        </span>
       </div>
-      <div className="mt-4 flex flex-1 flex-col gap-3">
+      <div className="mt-3 flex flex-1 flex-col gap-2.5">
         <SortableContext items={column.cardIds} strategy={verticalListSortingStrategy}>
           {cards.map((card) => (
             <KanbanCard
@@ -86,16 +71,12 @@ export const KanbanColumn = ({
           ))}
         </SortableContext>
         {cards.length === 0 && (
-          <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
+          <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-[var(--mauve)]/40 px-3 py-6 text-center text-sm text-[var(--ink-soft)]">
             Drop a card here
           </div>
         )}
       </div>
-      <NewCardForm
-        onAdd={(title, details, priority, dueDate) =>
-          onAddCard(column.id, title, details, priority, dueDate)
-        }
-      />
+      <NewCardForm onAdd={(fields) => onAddCard(column.id, fields)} />
     </section>
   );
 };
