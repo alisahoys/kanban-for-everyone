@@ -1,3 +1,4 @@
+import { userApiUrl } from "@/lib/boardApi";
 import type { BoardData } from "@/lib/kanban";
 
 export type ChatTurn = {
@@ -10,19 +11,11 @@ export type BoardChatResult = {
   board?: BoardData;
 };
 
-const chatUrl = () => {
-  const apiBase =
-    window.location.port === "3000"
-      ? `${window.location.protocol}//${window.location.hostname}:8000/api`
-      : "/api";
-  return `${apiBase}/users/demo-user/chat`;
-};
-
 export const sendBoardChat = async (
   question: string,
   history: ChatTurn[]
 ): Promise<BoardChatResult> => {
-  const response = await fetch(chatUrl(), {
+  const response = await fetch(userApiUrl("chat"), {
     method: "POST",
     cache: "no-store",
     headers: { "Content-Type": "application/json" },

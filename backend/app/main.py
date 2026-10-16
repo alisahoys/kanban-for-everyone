@@ -20,8 +20,7 @@ from app.openrouter import (
 )
 from app.schemas import BoardData, ChatRequest, ChatResponse
 
-BASE_DIR = Path(__file__).resolve().parent
-FRONTEND_DIR = BASE_DIR.parents[1] / "frontend" / "out"
+FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend" / "out"
 
 
 def create_app(

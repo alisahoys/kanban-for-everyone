@@ -17,12 +17,12 @@ describe("NewCardForm", () => {
     });
     await user.click(screen.getByRole("button", { name: "Add card" }));
 
-    expect(onAdd).toHaveBeenCalledWith(
-      "Plan launch",
-      "Prepare release notes",
-      "high",
-      "2027-03-12"
-    );
+    expect(onAdd).toHaveBeenCalledWith({
+      title: "Plan launch",
+      details: "Prepare release notes",
+      priority: "high",
+      dueDate: "2027-03-12",
+    });
     expect(screen.getByRole("button", { name: "Add a card" })).toBeInTheDocument();
   });
 

@@ -4,7 +4,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-from app.constants import FIXED_COLUMN_IDS
 from app.schemas import BoardData
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]

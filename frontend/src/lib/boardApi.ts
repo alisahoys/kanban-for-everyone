@@ -13,12 +13,13 @@ const isCalendarDate = (value: string) => {
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 };
 
-const boardUrl = () => {
+// The Next dev server (port 3000) talks to the backend on port 8000; the packaged app is same-origin.
+export const userApiUrl = (path: string) => {
   const apiBase =
     window.location.port === "3000"
       ? `${window.location.protocol}//${window.location.hostname}:8000/api`
       : "/api";
-  return `${apiBase}/users/${demoUserId}/board`;
+  return `${apiBase}/users/${demoUserId}/${path}`;
 };
 
 export const boardSnapshot = (board: BoardData) =>
@@ -70,8 +71,7 @@ const parseBoardData = (value: unknown): BoardData | null => {
     referencedIds.length === new Set(referencedIds).size &&
     referencedIds.length === Object.keys(cards).length &&
     referencedIds.every((id) => {
-      const card = cards[id];
-      const candidateCard = card as Record<string, unknown> | null;
+      const candidateCard = cards[id] as Record<string, unknown> | null;
       return (
         typeof candidateCard === "object" &&
         candidateCard !== null &&
@@ -113,15 +113,14 @@ const readLegacyBoard = (): BoardData | null => {
   }
 
   try {
-    const parsed: unknown = JSON.parse(saved);
-    return parseBoardData(parsed);
+    return parseBoardData(JSON.parse(saved));
   } catch {
     return null;
   }
 };
 
 const requestBoard = async (method: "GET" | "PUT", board?: BoardData) => {
-  const response = await fetch(boardUrl(), {
+  const response = await fetch(userApiUrl("board"), {
     method,
     cache: "no-store",
     headers: board ? { "Content-Type": "application/json" } : undefined,

@@ -29,7 +29,6 @@ class OpenRouterClient:
     ) -> None:
         self.api_key = api_key if api_key is not None else os.getenv("OPENROUTER_API_KEY")
         self.model = model or os.getenv("OPENROUTER_MODEL", DEFAULT_MODEL)
-        self.timeout = REQUEST_TIMEOUT_SECONDS
         self.transport = transport
 
     async def complete(self, prompt: str) -> str:
@@ -52,7 +51,7 @@ class OpenRouterClient:
 
         try:
             async with httpx.AsyncClient(
-                timeout=self.timeout, transport=self.transport
+                timeout=REQUEST_TIMEOUT_SECONDS, transport=self.transport
             ) as client:
                 response = await client.post(
                     OPENROUTER_API_URL,
